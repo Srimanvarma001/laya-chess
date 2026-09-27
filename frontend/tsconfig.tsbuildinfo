@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/layaclient.ts","./src/chess/engine.ts","./src/components/board.tsx","./src/components/calibrationpanel.tsx","./src/components/evalbar.tsx","./src/components/sessiontally.tsx","./src/types/index.ts"],"version":"5.9.3"}

@@ -1,0 +1,353 @@
+/* ---------------------------------------------------------------------
+   Design tokens
+   Dark pixel-terminal look: near-black background, lavender accent,
+   Silkscreen pixel font throughout. See docs/PROJECT.md §14 for what the
+   calibration panel is supposed to communicate.
+--------------------------------------------------------------------- */
+:root {
+  --bg: #0b0b10;
+  --panel: #131318;
+  --panel-raised: #191922;
+  --border: #2a2a35;
+  --border-bright: #3a3a4a;
+
+  --text: #ece9f7;
+  --text-muted: #8a86a0;
+  --text-dim: #5c5870;
+
+  --accent: #b9a6ff;
+  --accent-dim: #766a99;
+  --accent-bg: rgba(185, 166, 255, 0.1);
+
+  --gold: #e8c15a;
+  --gold-bg: rgba(232, 193, 90, 0.1);
+
+  --good: #7fd99a;
+  --bad: #e8768a;
+
+  --square-light: #ece7da;
+  --square-dark: #5b6478;
+
+  --font: "Silkscreen", "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+body {
+  padding: 2rem;
+}
+
+.app {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------
+   Header
+--------------------------------------------------------------------- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-title {
+  font-size: 1.6rem;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+.app-title .accent { color: var(--accent); }
+
+.app-subtitle {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  margin: 0.35rem 0 0;
+  max-width: 34rem;
+  line-height: 1.6;
+}
+
+.header-status {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.header-status .dot {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  margin-right: 0.35rem;
+  background: var(--accent-dim);
+}
+.header-status .dot.on { background: var(--good); }
+
+/* ---------------------------------------------------------------------
+   Status banner above the board
+--------------------------------------------------------------------- */
+.status-banner {
+  border: 1px solid var(--accent-dim);
+  background: var(--accent-bg);
+  color: var(--accent);
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+.status-banner.attention {
+  border-color: var(--gold);
+  background: var(--gold-bg);
+  color: var(--gold);
+}
+.status-banner.bad {
+  border-color: var(--bad);
+  background: rgba(232, 118, 138, 0.1);
+  color: var(--bad);
+}
+
+/* ---------------------------------------------------------------------
+   Layout
+--------------------------------------------------------------------- */
+main {
+  display: flex;
+  gap: 1.75rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.board-section {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+/* ---------------------------------------------------------------------
+   Eval bar — vertical, reflects material balance, purple-over-dark
+--------------------------------------------------------------------- */
+.eval-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eval-bar {
+  width: 14px;
+  height: 434px;
+  border: 1px solid var(--border-bright);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+.eval-bar-fill {
+  background: var(--accent);
+  width: 100%;
+  transition: height 0.25s ease;
+}
+.eval-bar-label {
+  font-size: 0.5rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 0.35rem;
+}
+
+/* ---------------------------------------------------------------------
+   Board
+--------------------------------------------------------------------- */
+.board-wrap { display: flex; flex-direction: column; align-items: center; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 54px);
+  grid-template-rows: repeat(8, 54px);
+  border: 1px solid var(--border-bright);
+}
+
+.square {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+.square.light { background: var(--square-light); }
+.square.dark { background: var(--square-dark); }
+.square.selected { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-bg); }
+.dot {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  opacity: 0.55;
+  display: block;
+}
+.piece { line-height: 1; }
+.piece-white {
+  color: #ffffff;
+  text-shadow:
+    -1px -1px 0 #17161d, 1px -1px 0 #17161d,
+    -1px 1px 0 #17161d, 1px 1px 0 #17161d,
+    0 0 3px rgba(0, 0, 0, 0.8);
+}
+.piece-black {
+  color: #121218;
+  text-shadow:
+    -1px -1px 0 #f4f2fb, 1px -1px 0 #f4f2fb,
+    -1px 1px 0 #f4f2fb, 1px 1px 0 #f4f2fb,
+    0 0 3px rgba(255, 255, 255, 0.6);
+}
+
+.game-status {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  width: 100%;
+  max-width: 24rem;
+}
+.game-status .warn { color: var(--gold); }
+
+button {
+  font-family: var(--font);
+  background: var(--panel-raised);
+  color: var(--text);
+  border: 1px solid var(--border-bright);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.6rem;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+}
+button:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+.error-banner {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(232, 118, 138, 0.1);
+  border: 1px solid var(--bad);
+  color: var(--bad);
+  font-size: 0.6rem;
+  max-width: 24rem;
+}
+
+/* ---------------------------------------------------------------------
+   Calibration / decision panel
+--------------------------------------------------------------------- */
+.side-panel { min-width: 24rem; flex: 1; }
+
+.panel {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 1rem;
+}
+.panel + .panel { margin-top: 1rem; }
+
+.panel-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-pill {
+  font-size: 0.55rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-bright);
+  color: var(--text-muted);
+}
+.status-pill.connected { border-color: var(--good); color: var(--good); }
+.status-pill.thinking { border-color: var(--gold); color: var(--gold); }
+.status-pill.unavailable, .status-pill.timeout, .status-pill.invalid_response {
+  border-color: var(--bad); color: var(--bad);
+}
+
+.headline {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.headline .move { color: var(--accent); }
+.headline .pct { color: var(--accent); }
+.headline .agree { color: var(--good); }
+.headline .disagree { color: var(--bad); }
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr 2.6rem;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.62rem;
+}
+.bar-row .move-label { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track {
+  display: block;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  height: 12px;
+  position: relative;
+}
+.bar-fill {
+  display: block;
+  background: var(--accent);
+  height: 100%;
+}
+.bar-row.top .bar-fill { background: var(--accent); }
+.bar-row .pct-label { color: var(--text-muted); text-align: right; }
+
+.panel-note {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-top: 0.9rem;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+}
+.meta-row b { color: var(--text); }
+
+/* ---------------------------------------------------------------------
+   Session tally ("scoreboard" equivalent)
+--------------------------------------------------------------------- */
+.tally {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  text-align: center;
+}
+.tally-figure { font-size: 1.4rem; color: var(--accent); }
+.tally-figure.bad { color: var(--bad); }
+.tally-label { font-size: 0.55rem; color: var(--text-muted); margin-top: 0.25rem; }
+.tally-vs { color: var(--text-dim); font-size: 0.7rem; }

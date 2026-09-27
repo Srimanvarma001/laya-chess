@@ -1,0 +1,2 @@
+# Only needed for scripts/, not for running Laya itself.
+python-chess>=1.10
