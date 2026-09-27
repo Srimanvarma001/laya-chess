@@ -67,6 +67,12 @@ export function getSnapshot(fen: string, history: string[] = []): GameSnapshot {
   };
 }
 
+/** Piece sitting on a square ({ type: "p"|"n"|..., color: "w"|"b" }), or null. */
+export function getPieceAt(fen: string, square: string): { type: string; color: string } | null {
+  const piece = new Chess(fen).get(square as any);
+  return piece ? { type: piece.type, color: piece.color } : null;
+}
+
 /** Applies a move by candidate id ("e2e4", "e7e8q", ...) and returns the new snapshot. */
 export function applyMove(fen: string, history: string[], candidateId: string): GameSnapshot {
   const chess = new Chess(fen);

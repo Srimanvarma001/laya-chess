@@ -170,11 +170,20 @@ main {
 --------------------------------------------------------------------- */
 .board-wrap { display: flex; flex-direction: column; align-items: center; }
 
+/* Relative anchor so the trails svg layers exactly on top of the grid.
+   The border lives here (not on .board) so grid track (0,0) == svg (0,0). */
+.board-stack {
+  position: relative;
+  width: 434px;
+  height: 434px;
+  border: 1px solid var(--border-bright);
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(8, 54px);
   grid-template-rows: repeat(8, 54px);
-  border: 1px solid var(--border-bright);
+  border: none;
 }
 
 .square {
@@ -199,7 +208,76 @@ main {
   opacity: 0.55;
   display: block;
 }
-.piece { line-height: 1; }
+.piece { line-height: 1; position: relative; z-index: 3; }
+
+/* ---------------------------------------------------------------------
+   Ghost previews — translucent glowing mover on destination squares.
+   Absolutely centered over the cell (over empty squares and captures
+   alike), never interactive, real pieces stay solid underneath/above.
+--------------------------------------------------------------------- */
+.ghost {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+.ghost-white { color: #ffffff; }
+.ghost-black { color: #121218; }
+.ghost-tier-0 {
+  opacity: 0.7;
+  filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px var(--accent));
+}
+.ghost-tier-1 {
+  opacity: 0.5;
+  filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 9px var(--accent));
+}
+.ghost-tier-2 {
+  opacity: 0.35;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+/* Same 1.4s period as the trails pulse so ghosts breathe with the lines. */
+.ghost-pulse {
+  animation: ghost-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ghost-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.45; }
+}
+
+/* ---------------------------------------------------------------------
+   Played-move slide: glyph glides from->to over ~280ms. Static destination
+   glyph hides meanwhile (.piece-hidden) to avoid a double image.
+--------------------------------------------------------------------- */
+.piece-hidden { visibility: hidden; }
+.move-anim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 4;
+  animation: move-slide 280ms ease-out forwards;
+}
+@keyframes move-slide {
+  from { transform: translate(var(--move-fx), var(--move-fy)); }
+  to { transform: translate(var(--move-tx), var(--move-ty)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .move-anim { display: none; }
+}
 .piece-white {
   color: #ffffff;
   text-shadow:
@@ -213,6 +291,39 @@ main {
     -1px -1px 0 #f4f2fb, 1px -1px 0 #f4f2fb,
     -1px 1px 0 #f4f2fb, 1px 1px 0 #f4f2fb,
     0 0 3px rgba(255, 255, 255, 0.6);
+}
+
+/* ---------------------------------------------------------------------
+   Thinking trails overlay — faint purple candidate lines on top of the
+   board. Click-through (pointer-events: none) so squares stay clickable.
+--------------------------------------------------------------------- */
+.move-trails {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 600ms ease;
+}
+/* var() works here (real CSS) but NOT in SVG presentation attributes. */
+.move-trails line {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+/* Gradient stops need the accent too — same var() limitation as above. */
+.move-trails .trail-glow-stop {
+  stop-color: var(--accent);
+}
+.move-trails.considering {
+  animation: trails-pulse 1.4s ease-in-out infinite;
+}
+.move-trails.fading {
+  opacity: 0;
+}
+@keyframes trails-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 
 .game-status {

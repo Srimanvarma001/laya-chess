@@ -21,6 +21,14 @@ export interface MaterialBalance {
   diff: number;
 }
 
+/** Ghost preview on a destination square: the piece that would land there. */
+export interface GhostInfo {
+  /** e.g. "wp", "bn" — mover's color+type. */
+  pieceKey: string;
+  /** -1 = considering (uniform), 0/1/2 = resolved rank tier. */
+  tier: number;
+}
+
 export interface GameSnapshot {
   fen: string;
   turn: "w" | "b";
