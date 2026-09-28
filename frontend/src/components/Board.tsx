@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { Chess } from "chess.js";
 import type { CandidateMove, GhostInfo } from "../types";
 import { getLegalMoves } from "../chess/engine";
-import { squareCenter, TRAIL_SQUARE_PX } from "./MoveTrails";
+import { isKnightJump, knightCorner, squareCenter, TRAIL_SQUARE_PX } from "./MoveTrails";
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -21,6 +21,8 @@ interface BoardProps {
   ghostPieces?: Map<string, GhostInfo>;
   /** Pulse ghosts in sync with the considering trails animation. */
   ghostPulse?: boolean;
+  /** Squares whose ghosts stay pinned (no blink) while the piece hops to them. */
+  landingSquares?: Set<string>;
   /** Last played move: glyph slides from->to once, then rests. */
   lastMove?: { from: string; to: string; pieceKey: string; key: number } | null;
   /** Called with the candidate move the user picked. This is the ONLY way a
@@ -36,11 +38,14 @@ export function Board({
   overlay,
   ghostPieces,
   ghostPulse,
+  landingSquares,
   lastMove,
 }: BoardProps) {
   const [selected, setSelected] = useState<string | null>(null);
-  // Active slide animation: hides the static destination glyph for ~300ms
-  // while the animated copy travels. Keyed so each new move re-triggers.
+  // Active slide animation: hides the static destination glyph while the
+  // animated copy glides ALONG its trail line (~750ms straight, ~850ms
+  // knight L-hop, synced with the played line's slow ~1000ms dissolve).
+  // Keyed so each new move re-triggers.
   const [anim, setAnim] = useState<typeof lastMove>(null);
   useEffect(() => {
     if (!lastMove) {
@@ -48,7 +53,7 @@ export function Board({
       return;
     }
     setAnim(lastMove);
-    const t = window.setTimeout(() => setAnim(null), 320);
+    const t = window.setTimeout(() => setAnim(null), 900);
     return () => window.clearTimeout(t);
   }, [lastMove]);
 
@@ -130,21 +135,26 @@ export function Board({
               ) : (
                 isDestination && <span className="dot" />
               )}
-              {ghost && (
-                <span
-                  className={[
-                    "ghost",
-                    ghost.pieceKey[0] === "w" ? "ghost-white" : "ghost-black",
-                    ghost.tier >= 0 ? `ghost-tier-${ghost.tier}` : "",
-                    ghostPulse ? "ghost-pulse" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-hidden="true"
-                >
-                  {UNICODE_PIECES[ghost.pieceKey]}
-                </span>
-              )}
+              {ghost && (() => {
+                // Landing ghost: pinned solid at the destination while the
+                // piece hops to it — no blink, dissolves on arrival.
+                const isLanding = landingSquares?.has(square) ?? false;
+                return (
+                  <span
+                    className={[
+                      "ghost",
+                      ghost.pieceKey[0] === "w" ? "ghost-white" : "ghost-black",
+                      ghost.tier >= 0 ? `ghost-tier-${ghost.tier}` : "",
+                      isLanding ? "ghost-landing" : ghostPulse ? "ghost-pulse" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    aria-hidden="true"
+                  >
+                    {UNICODE_PIECES[ghost.pieceKey]}
+                  </span>
+                );
+              })()}
             </button>
           );
         })
@@ -155,18 +165,28 @@ export function Board({
         const a = squareCenter(anim.from);
         const b = squareCenter(anim.to);
         const half = TRAIL_SQUARE_PX / 2;
+        // Knights hop the L (long leg first) to their waiting ghost —
+        // same corner as the trail polyline so glyph rides the line.
+        const knight = isKnightJump(anim.from, anim.to);
+        const mid = knight ? knightCorner(a, b) : null;
         const style = {
           "--move-fx": `${a.x - half}px`,
           "--move-fy": `${a.y - half}px`,
           "--move-tx": `${b.x - half}px`,
           "--move-ty": `${b.y - half}px`,
+          ...(mid
+            ? {
+                "--move-mx": `${mid.x - half}px`,
+                "--move-my": `${mid.y - half}px`,
+              }
+            : {}),
         } as CSSProperties;
         return (
           <span
             key={anim.key}
             className={`move-anim ${
               anim.pieceKey[0] === "w" ? "ghost-white" : "ghost-black"
-            }`}
+            }${knight ? " move-knight" : ""}`}
             style={style}
             aria-hidden="true"
           >

@@ -9,8 +9,8 @@ export interface TrailMove {
 
 interface MoveTrailsProps {
   moves: TrailMove[];
-  mode: "considering" | "resolved";
-  /** When true, the overlay mounts visible then fades to 0 (600ms CSS transition). */
+  mode: "considering" | "resolved" | "played";
+  /** When true, the overlay mounts visible then fades to 0 (slow dissolve for played, 600ms for old resolved). */
   fading?: boolean;
 }
 
@@ -25,6 +25,23 @@ export function squareCenter(square: string): { x: number; y: number } {
     x: fileIndex * TRAIL_SQUARE_PX + TRAIL_SQUARE_PX / 2,
     y: (8 - rankValue) * TRAIL_SQUARE_PX + TRAIL_SQUARE_PX / 2,
   };
+}
+
+/** True for a knight jump (1+2 L): the only piece that moves this way. */
+export function isKnightJump(from: string, to: string): boolean {
+  const df = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
+  const dr = Math.abs(Number(from[1]) - Number(to[1]));
+  return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+}
+
+/**
+ * L-corner for a knight trail: travel the LONG leg first, then the short
+ * one (e.g. b1->c3 goes b1->b3->c3, g1->e2 goes g1->e1->e2).
+ */
+export function knightCorner(a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  return Math.abs(dx) > Math.abs(dy) ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
 }
 
 /**
@@ -48,12 +65,21 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
   // One glow node per unique square touched by any drawn line (origins AND
   // destinations). Brightness follows the best (lowest-index) move touching
   // the square, same tiers as the lines, so shared origins glow too.
+  // "played" is always tier 0: single bright line under the sliding piece.
+  // Knight trails also glow their L-corner so the bend reads clearly.
   const glows = new Map<string, { x: number; y: number; tier: number }>();
   moves.forEach((m, idx) => {
-    const tier = mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
+    const tier =
+      mode === "played" ? 0 : mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
     for (const sq of [m.from, m.to]) {
       const prev = glows.get(sq);
       if (!prev || tier < prev.tier) glows.set(sq, { ...squareCenter(sq), tier });
+    }
+    if (isKnightJump(m.from, m.to)) {
+      const c = knightCorner(squareCenter(m.from), squareCenter(m.to));
+      const key = `corner-${m.from}${m.to}`;
+      const prev = glows.get(key);
+      if (!prev || tier < prev.tier) glows.set(key, { ...c, tier });
     }
   });
   const glowStyle = (tier: number): { r: number; opacity: number } =>
@@ -101,7 +127,8 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
         const a = squareCenter(m.from);
         const b = squareCenter(m.to);
         const w = Math.max(0, Math.min(1, m.weight));
-        const tier = mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
+        const tier =
+          mode === "played" ? 0 : mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
         const strokeWidth =
           tier === 0 ? 2.75 : tier === 1 ? 2 : tier === 2 ? 1 : 1.5;
         const opacity =
@@ -112,6 +139,21 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
               : tier === 2
                 ? 0.08 + w * 0.06
                 : 0.15;
+        // Knights hop an L: draw the bend (long leg first), never a straight cut.
+        if (isKnightJump(m.from, m.to)) {
+          const c = knightCorner(a, b);
+          return (
+            <polyline
+              key={`${m.from}${m.to}`}
+              points={`${a.x},${a.y} ${c.x},${c.y} ${b.x},${b.y}`}
+              fill="none"
+              strokeWidth={strokeWidth}
+              opacity={opacity}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          );
+        }
         return (
           <line
             key={`${m.from}${m.to}`}

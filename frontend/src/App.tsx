@@ -95,10 +95,24 @@ export default function App() {
   // Previous resolved trails, kept mounted briefly so they fade out (600ms
   // CSS transition) instead of cutting when a new considering phase starts.
   const [fadingTrails, setFadingTrails] = useState<TrailMove[] | null>(null);
-  const fadeTimeoutRef = useRef<number | null>(null);  // Considering lines appear only after the old resolved fade (~600ms) has
-  // finished, so stale and fresh move sets are never drawn on top of each other.
+  const fadeTimeoutRef = useRef<number | null>(null);
+  // Ghosts + lines appear the instant the human moves (no delay) and blink
+  // while Laya thinks.
   const [consideringVisible, setConsideringVisible] = useState(false);
   const consideringTimeoutRef = useRef<number | null>(null);
+  // Single bright line for the piece currently sliding (white or black).
+  // Mounted together with Board's move-anim so the glyph glides ALONG the
+  // line while the line slowly vanishes underneath it.
+  const [slideLine, setSlideLine] = useState<{ from: string; to: string; key: number } | null>(null);
+  const slideTimeoutRef = useRef<number | null>(null);
+  // Destination ghost the sliding piece is hopping to: stays pinned while
+  // the glyph travels, then vanishes with everything once it lands.
+  const [landingGhost, setLandingGhost] = useState<{
+    square: string;
+    pieceKey: string;
+    key: number;
+  } | null>(null);
+  const landingTimeoutRef = useRef<number | null>(null);
   // Guards out-of-order responses when the user moves twice quickly: only
   // the latest request may write decision/connection state.
   const requestIdRef = useRef(0);
@@ -113,6 +127,8 @@ export default function App() {
       if (consideringTimeoutRef.current !== null) {
         window.clearTimeout(consideringTimeoutRef.current);
       }
+      if (slideTimeoutRef.current !== null) window.clearTimeout(slideTimeoutRef.current);
+      if (landingTimeoutRef.current !== null) window.clearTimeout(landingTimeoutRef.current);
     },
     []
   );
@@ -122,6 +138,23 @@ export default function App() {
       window.clearTimeout(consideringTimeoutRef.current);
       consideringTimeoutRef.current = null;
     }
+  }
+
+  /** Show the played-move line under the sliding glyph, slowly vanishing. */
+  function showSlideLine(from: string, to: string, key: number) {
+    setSlideLine({ from, to, key });
+    if (slideTimeoutRef.current !== null) window.clearTimeout(slideTimeoutRef.current);
+    // Board's glide is ~750ms straight / ~850ms knight L; keep the line a
+    // beat longer so the piece lands before the line fully dissolves.
+    slideTimeoutRef.current = window.setTimeout(() => setSlideLine(null), 1100);
+  }
+
+  /** Pin the destination ghost until the sliding piece lands, then vanish all. */
+  function showLandingGhost(square: string, pieceKey: string, key: number) {
+    setLandingGhost({ square, pieceKey, key });
+    if (landingTimeoutRef.current !== null) window.clearTimeout(landingTimeoutRef.current);
+    // Matches Board's ~900ms anim window: ghost dissolves as glyph arrives.
+    landingTimeoutRef.current = window.setTimeout(() => setLandingGhost(null), 900);
   }
 
   const materialEvals = evaluateCandidatesByMaterial(snapshot.fen, snapshot.legalMoves);
@@ -137,17 +170,23 @@ export default function App() {
     decision && decisionCandidates ? buildResolvedTrails(decision, decisionCandidates) : null;
   const showResolved = resolvedTrails && !isThinking;
 
-  // Ghost preview pulse follows the considering overlay visibility.
-  const glowPulse = consideringVisible && !!consideringTrails;
+  // Ghost preview pulse follows whichever overlay is visible, so both
+  // considering and resolved ghosts vanish and return in sync with lines.
+  // Landing ghost never blinks — it stays pinned while the piece hops to it.
+  const glowPulse = !!(consideringVisible && consideringTrails) || !!showResolved;
 
-  // Ghost previews, same sets/fens as the trails: considering -> capped legal
-  // set on the live position; resolved -> scored top-12 on the scored position.
+  // Ghost previews: thinking -> capped legal set (blinking); landing ->
+  // the single destination the piece is travelling to (pinned solid, then
+  // vanishes on arrival); resolved -> scored top-12.
   const ghostPieces: Map<string, GhostInfo> =
-    consideringVisible && consideringTrails
-      ? buildGhosts(consideringTrails, snapshot.fen, false)
-      : showResolved && resolvedTrails
-        ? buildGhosts(resolvedTrails, decisionFen, true)
-        : new Map();
+    landingGhost
+      ? new Map([[landingGhost.square, { pieceKey: landingGhost.pieceKey, tier: 0 }]])
+      : consideringVisible && consideringTrails
+        ? buildGhosts(consideringTrails, snapshot.fen, false)
+        : showResolved && resolvedTrails
+          ? buildGhosts(resolvedTrails, decisionFen, true)
+          : new Map();
+  const landingSquares = landingGhost ? new Set([landingGhost.square]) : undefined;
 
   function stashResolvedTrailsForFade() {
     if (decision && decisionCandidates) {
@@ -183,6 +222,8 @@ export default function App() {
           pieceKey: `${piece.color}${piece.type}`,
           key: next.history.length,
         });
+        // White glyph glides along its own line while it slowly vanishes.
+        showSlideLine(candidate.from, candidate.to, next.history.length);
       }
     }
     stashResolvedTrailsForFade();
@@ -207,13 +248,10 @@ export default function App() {
       "legal:",
       position.legalMoves.map((m) => m.id).join(" ")
     );
-    // Reveal the pulsing considering lines only after the previous resolved
-    // fade has cleared, so two move sets never overlap on the board.
-    setConsideringVisible(false);
+    // Ghosts + lines appear IMMEDIATELY on the human move — no 650ms wait —
+    // so the thinking blink/glow starts the same frame the board updates.
     clearConsideringTimer();
-    consideringTimeoutRef.current = window.setTimeout(() => {
-      if (requestIdRef.current === requestId) setConsideringVisible(true);
-    }, 650);
+    setConsideringVisible(true);
     const hideConsidering = () => {
       clearConsideringTimer();
       setConsideringVisible(false);
@@ -269,15 +307,23 @@ export default function App() {
       {
         const piece = getPieceAt(position.fen, picked.from);
         if (piece) {
+          const pieceKey = `${piece.color}${piece.type}`;
           setLastMove({
             from: picked.from,
             to: picked.to,
-            pieceKey: `${piece.color}${piece.type}`,
+            pieceKey,
             key: after.history.length,
           });
+          // Black glyph glides ALONG its line to its waiting ghost: mount
+          // the single bright trail under the sliding piece (L-bend for
+          // knights) + pin the destination ghost; both slowly vanish
+          // (~1s) while the piece travels (~750-850ms), all gone on landing.
+          showSlideLine(picked.from, picked.to, after.history.length);
+          showLandingGhost(picked.to, pieceKey, after.history.length);
         }
       }
-      // The move is played: lines and ghosts vanish together, immediately.
+      // Thinking ghosts/lines are gone; the played line + sliding piece
+      // take over and dissolve slowly instead of cutting instantly.
       // (Decision details stay in the console log + session tally.)
       setDecision(null);
       setDecisionCandidates(null);
@@ -310,6 +356,10 @@ export default function App() {
     requestIdRef.current += 1; // invalidate any in-flight decision
     if (fadeTimeoutRef.current !== null) window.clearTimeout(fadeTimeoutRef.current);
     setFadingTrails(null);
+    if (slideTimeoutRef.current !== null) window.clearTimeout(slideTimeoutRef.current);
+    setSlideLine(null);
+    if (landingTimeoutRef.current !== null) window.clearTimeout(landingTimeoutRef.current);
+    setLandingGhost(null);
     clearConsideringTimer();
     setConsideringVisible(false);
     setLastMove(null);
@@ -375,6 +425,7 @@ export default function App() {
               disabled={snapshot.isGameOver || snapshot.turn !== "w" || connectionState === "thinking"}
               ghostPieces={ghostPieces}
               ghostPulse={glowPulse}
+              landingSquares={landingSquares}
               lastMove={lastMove}
               overlay={
                 <>
@@ -386,6 +437,14 @@ export default function App() {
                   )}
                   {resolvedTrails && !isThinking && (
                     <MoveTrails moves={resolvedTrails} mode="resolved" />
+                  )}
+                  {slideLine && (
+                    <MoveTrails
+                      key={`slide-${slideLine.key}`}
+                      moves={[{ from: slideLine.from, to: slideLine.to, weight: 1 }]}
+                      mode="played"
+                      fading
+                    />
                   )}
                 </>
               }

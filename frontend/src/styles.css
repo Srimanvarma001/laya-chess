@@ -231,29 +231,56 @@ main {
 .ghost-white { color: #ffffff; }
 .ghost-black { color: #121218; }
 .ghost-tier-0 {
+  --ghost-peak: 0.85;
   opacity: 0.7;
   filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px var(--accent));
 }
 .ghost-tier-1 {
+  --ghost-peak: 0.6;
   opacity: 0.5;
   filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 9px var(--accent));
 }
 .ghost-tier-2 {
+  --ghost-peak: 0.38;
   opacity: 0.35;
   filter: drop-shadow(0 0 5px var(--accent));
 }
-/* Same 1.4s period as the trails pulse so ghosts breathe with the lines. */
-.ghost-pulse {
-  animation: ghost-pulse 1.4s ease-in-out infinite;
+/* Thinking blink + glow: ghosts pop in immediately, then blink fast
+   while Laya weighs its reply. Peak opacity comes from the tier above so
+   the top candidate still pops the most. text-shadow adds extra glow
+   without overriding the tier drop-shadow filters. */
+.ghost {
+  --ghost-peak: 0.45;
 }
-@keyframes ghost-pulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.45; }
+.ghost-pulse {
+  animation: ghost-blink 1.15s ease-in-out infinite;
+  will-change: opacity, transform;
+  text-shadow: 0 0 12px var(--accent), 0 0 24px rgba(185, 166, 255, 0.55);
+}
+@keyframes ghost-blink {
+  0%, 100% { opacity: calc(var(--ghost-peak, 0.45) * 0.35); transform: scale(0.94); }
+  50% { opacity: var(--ghost-peak, 0.45); transform: scale(1.07); }
+}
+/* Landing ghost: pinned solid at the destination while the piece travels
+   to it — no blink — then dissolves exactly as the glyph arrives, so all
+   ghosts are gone on landing. */
+.ghost-landing {
+  opacity: var(--ghost-peak, 0.85);
+  text-shadow: 0 0 14px var(--accent), 0 0 28px rgba(185, 166, 255, 0.7);
+  animation: ghost-land 900ms ease forwards;
+  will-change: opacity, transform;
+}
+@keyframes ghost-land {
+  0% { opacity: var(--ghost-peak, 0.85); transform: scale(1); }
+  65% { opacity: var(--ghost-peak, 0.85); transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.1); }
 }
 
 /* ---------------------------------------------------------------------
-   Played-move slide: glyph glides from->to over ~280ms. Static destination
-   glyph hides meanwhile (.piece-hidden) to avoid a double image.
+   Played-move slide: glyph glides ALONG its trail line over ~750ms so the
+   piece visibly travels the line while the line slowly dissolves (~1000ms)
+   underneath it. Static destination glyph hides meanwhile (.piece-hidden)
+   to avoid a double image. Glow matches the trail so piece + line read as one.
 --------------------------------------------------------------------- */
 .piece-hidden { visibility: hidden; }
 .move-anim {
@@ -269,14 +296,30 @@ main {
   line-height: 1;
   pointer-events: none;
   z-index: 4;
-  animation: move-slide 280ms ease-out forwards;
+  animation: move-slide 750ms cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
+  filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 16px rgba(185, 166, 255, 0.6));
+  will-change: transform;
 }
 @keyframes move-slide {
-  from { transform: translate(var(--move-fx), var(--move-fy)); }
-  to { transform: translate(var(--move-tx), var(--move-ty)); }
+  from { transform: translate(var(--move-fx), var(--move-fy)) scale(1); }
+  to { transform: translate(var(--move-tx), var(--move-ty)) scale(1); }
+}
+/* Knight L-hop: glyph rides the same L-bend as its trail (long leg first),
+   with a little lift at the corner so the jump reads as a hop. */
+.move-anim.move-knight {
+  animation: move-slide-knight 850ms cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+}
+@keyframes move-slide-knight {
+  0% { transform: translate(var(--move-fx), var(--move-fy)) scale(1); }
+  45% { transform: translate(var(--move-mx), var(--move-my)) scale(1.14); }
+  100% { transform: translate(var(--move-tx), var(--move-ty)) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .move-anim { display: none; }
+  .ghost-pulse,
+  .ghost-landing,
+  .move-trails.considering,
+  .move-trails.resolved:not(.fading) { animation: none; }
 }
 .piece-white {
   color: #ffffff;
@@ -307,23 +350,50 @@ main {
   transition: opacity 600ms ease;
 }
 /* var() works here (real CSS) but NOT in SVG presentation attributes. */
-.move-trails line {
+.move-trails line,
+.move-trails polyline {
   stroke: var(--accent);
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 /* Gradient stops need the accent too — same var() limitation as above. */
 .move-trails .trail-glow-stop {
   stop-color: var(--accent);
 }
 .move-trails.considering {
-  animation: trails-pulse 1.4s ease-in-out infinite;
+  animation: trails-blink 1.15s ease-in-out infinite;
+  will-change: opacity;
+  filter: drop-shadow(0 0 6px rgba(185, 166, 255, 0.7));
+}
+.move-trails.resolved:not(.fading) {
+  animation: trails-vanish 4s ease-in-out infinite;
+  will-change: opacity;
+}
+/* Played line: single bright trail under the sliding glyph. No infinite
+   blink — it mounts bright then slowly dissolves (~1000ms) while the
+   piece glides along it. Extra glow so line + piece read as one. */
+.move-trails.played {
+  opacity: 1;
+  transition: opacity 1000ms ease;
+  filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 16px rgba(185, 166, 255, 0.5));
+}
+.move-trails.played.fading {
+  opacity: 0;
 }
 .move-trails.fading {
   opacity: 0;
 }
-@keyframes trails-pulse {
-  0%, 100% { opacity: 0.55; }
+/* Fast blink during thinking (synced 1.15s with ghosts). */
+@keyframes trails-blink {
+  0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
+}
+/* Slow dissolve synced with ghosts for resolved views. */
+@keyframes trails-vanish {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  62% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .game-status {
