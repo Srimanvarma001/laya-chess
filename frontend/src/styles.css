@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------------
    Design tokens
-   Dark pixel-terminal look: near-black background, lavender accent,
+   Dark pixel-terminal look: deep navy background, icy-blue accent,
    Silkscreen pixel font throughout. See docs/PROJECT.md §14 for what the
    calibration panel is supposed to communicate.
 
@@ -8,22 +8,23 @@
    geometry — grid, squares, overlay svg, slide animation and eval-bar
    height all derive from it. --sq-light/--sq-dark are the icy square
    colors; --trail is the cyan board accent (trails, glows, ghosts).
-   Page chrome (--accent lavender) is intentionally left alone.
+   Page chrome (--bg/--panel/--accent) uses the same icy palette as the
+   board, so the whole UI reads as one theme.
 --------------------------------------------------------------------- */
 :root {
-  --bg: #0b0b10;
-  --panel: #131318;
-  --panel-raised: #191922;
-  --border: #2a2a35;
-  --border-bright: #3a3a4a;
+  --bg: #0a1118;
+  --panel: #0f1a24;
+  --panel-raised: #15232f;
+  --border: #1f3242;
+  --border-bright: #2e475b;
 
-  --text: #ece9f7;
-  --text-muted: #8a86a0;
-  --text-dim: #5c5870;
+  --text: #e8eff3;
+  --text-muted: #8aa6b9;
+  --text-dim: #55707f;
 
-  --accent: #b9a6ff;
-  --accent-dim: #766a99;
-  --accent-bg: rgba(185, 166, 255, 0.1);
+  --accent: #9ed4f0;
+  --accent-dim: #4f7d97;
+  --accent-bg: rgba(158, 212, 240, 0.1);
 
   --gold: #e8c15a;
   --gold-bg: rgba(232, 193, 90, 0.1);
@@ -131,9 +132,9 @@ body {
   margin-bottom: 1rem;
 }
 .status-banner.attention {
-  border-color: var(--gold);
-  background: var(--gold-bg);
-  color: var(--gold);
+  border-color: var(--trail);
+  background: rgba(41, 182, 246, 0.1);
+  color: var(--trail);
 }
 .status-banner.bad {
   border-color: var(--bad);
@@ -586,7 +587,7 @@ button:hover { border-color: var(--accent-dim); color: var(--accent); }
   color: var(--text-muted);
 }
 .status-pill.connected { border-color: var(--good); color: var(--good); }
-.status-pill.thinking { border-color: var(--gold); color: var(--gold); }
+.status-pill.thinking { border-color: var(--trail); color: var(--trail); }
 .status-pill.unavailable, .status-pill.timeout, .status-pill.invalid_response {
   border-color: var(--bad); color: var(--bad);
 }
