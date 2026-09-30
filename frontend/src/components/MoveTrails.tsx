@@ -14,16 +14,37 @@ interface MoveTrailsProps {
   fading?: boolean;
 }
 
-export const TRAIL_SQUARE_PX = 54;
-export const TRAIL_BOARD_PX = TRAIL_SQUARE_PX * 8; // 432
+/**
+ * Single source of truth for square geometry: the real rendered square size
+ * from CSS `--sq-size` (see styles.css). Nothing here hardcodes a pixel
+ * constant — Board animations and trail coordinates both read this, so the
+ * whole board (grid, SVG overlay, slide positions) scales together.
+ */
+export function getSquareSizePx(): number {
+  if (typeof window === "undefined" || typeof document === "undefined") return 64;
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--sq-size").trim();
+    const n = parseFloat(raw);
+    if (Number.isFinite(n) && n > 0) return n;
+  } catch {
+    /* fall through to default */
+  }
+  return 64;
+}
 
-/** Pixel center of a square like "e4" on the 432px board. */
+/** Full board edge length in px (8 squares). Read live — not a constant. */
+export function getBoardPx(): number {
+  return getSquareSizePx() * 8;
+}
+
+/** Pixel center of a square like "e4", derived from the live --sq-size. */
 export function squareCenter(square: string): { x: number; y: number } {
+  const S = getSquareSizePx();
   const fileIndex = square.charCodeAt(0) - 97; // 'a' -> 0 ... 'h' -> 7
   const rankValue = Number(square[1]); // '1'..'8'
   return {
-    x: fileIndex * TRAIL_SQUARE_PX + TRAIL_SQUARE_PX / 2,
-    y: (8 - rankValue) * TRAIL_SQUARE_PX + TRAIL_SQUARE_PX / 2,
+    x: fileIndex * S + S / 2,
+    y: (8 - rankValue) * S + S / 2,
   };
 }
 
@@ -36,7 +57,7 @@ export function isKnightJump(from: string, to: string): boolean {
 
 /**
  * L-corner for a knight trail: travel the LONG leg first, then the short
- * one (e.g. b1->c3 goes b1->b3->c3, g1->e2 goes g1->e1->e2).
+ * one (e.g. b1->c3 goes b1->b3->c3, g1->e1->e2).
  */
 export function knightCorner(a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } {
   const dx = b.x - a.x;
@@ -45,9 +66,9 @@ export function knightCorner(a: { x: number; y: number }, b: { x: number; y: num
 }
 
 /**
- * Faint purple lines from each candidate move's origin to its destination,
- * layered exactly on top of the .board grid (see .board-stack / .move-trails
- * in styles.css). `pointer-events: none` so squares stay clickable.
+ * Faint cyan candidate lines layered exactly on top of the .board grid (see
+ * .board-stack / .move-trails in styles.css). `pointer-events: none` so
+ * squares stay clickable. Accent comes from --trail in CSS.
  */
 export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
   // Mount visible, then flip to faded so the CSS opacity transition animates
@@ -58,9 +79,28 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
     const t = window.setTimeout(() => setFaded(true), 30);
     return () => window.clearTimeout(t);
   }, [fading]);
+  // Re-render once after mount (and on resize) so the live --sq-size read
+  // above picks up the real stylesheet value instead of the first-paint
+  // fallback. Geometry otherwise comes straight from getSquareSizePx().
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    setTick((t) => t + 1);
+    const onResize = () => setTick((t) => t + 1);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   // Unique gradient id — several MoveTrails can be mounted at once (e.g. a
   // fading resolved overlay under a fresh considering one).
   const gradientId = useId();
+
+  const boardPx = getBoardPx();
+
+  // Resolved brightness normalizer: `moves` arrive sorted brightest-first,
+  // so moves[0] is the top pick. Opacity/thickness scale monotonically with
+  // rawConfidence relative to that top weight — the top pick is always the
+  // brightest (0.9), the rest fade in proportion to their real share.
+  const topWeight =
+    mode === "resolved" && moves.length > 0 ? Math.max(0, moves[0].weight) : 1;
 
   // One glow node per unique square touched by any drawn line (origins AND
   // destinations). Brightness follows the best (lowest-index) move touching
@@ -94,9 +134,9 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
   return (
     <svg
       className={`move-trails ${mode}${fading && faded ? " fading" : ""}`}
-      width={TRAIL_BOARD_PX}
-      height={TRAIL_BOARD_PX}
-      viewBox={`0 0 ${TRAIL_BOARD_PX} ${TRAIL_BOARD_PX}`}
+      width={boardPx}
+      height={boardPx}
+      viewBox={`0 0 ${boardPx} ${boardPx}`}
       aria-hidden="true"
     >
       <defs>
@@ -122,22 +162,26 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
       {/* `moves` must be sorted brightest-first: tier is by index so the top
         1-3 candidates pop in every position, even when raw weights are flat.
         (Stroke color lives in CSS — var() is not substituted in SVG
-        presentation attributes, so stroke="var(--accent)" would render black.) */}
+        presentation attributes, so stroke="var(--trail)" would render black.) */}
       {moves.map((m, idx) => {
         const a = squareCenter(m.from);
         const b = squareCenter(m.to);
         const w = Math.max(0, Math.min(1, m.weight));
         const tier =
           mode === "played" ? 0 : mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
+        // Resolved: continuous confidence weighting. norm is the move's real
+        // share relative to the top pick (1 for the winner); opacity and
+        // thickness both grow with it, so the bars and the trails agree.
+        const norm = mode === "resolved" && topWeight > 0 ? w / topWeight : w;
         const strokeWidth =
-          tier === 0 ? 2.75 : tier === 1 ? 2 : tier === 2 ? 1 : 1.5;
+          tier === 0 ? 3 : tier === 1 ? 1.75 + 1.25 * norm : tier === 2 ? 1 + 1.25 * norm : 1.5;
         const opacity =
           tier === 0
             ? 0.9
             : tier === 1
-              ? 0.5
+              ? 0.3 + 0.55 * norm
               : tier === 2
-                ? 0.08 + w * 0.06
+                ? 0.12 + 0.45 * norm
                 : 0.15;
         // Knights hop an L: draw the bend (long leg first), never a straight cut.
         if (isKnightJump(m.from, m.to)) {

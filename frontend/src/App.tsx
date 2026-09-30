@@ -10,33 +10,28 @@ import {
   LayaTimeoutError,
   checkHealth,
   decideMove,
+  reduceCandidates,
+  serverLabel,
 } from "./api/layaClient";
-import type { CandidateMove, GameSnapshot, GhostInfo, LayaConnectionState, LayaDecisionResponse, MaterialEval } from "./types";
+import type { CandidateMove, GameSnapshot, GhostInfo, LayaConnectionState, LayaDecisionResponse, LatencySample, MaterialEval } from "./types";
 
-/** Caps so many-candidate positions don't turn into unreadable spaghetti. */
-const TRAILS_CONSIDERING_CAP = 20;
+/** Resolved view keeps only the top-N confidence-weighted trails. */
 const TRAILS_RESOLVED_CAP = 12;
 
 /**
  * One ghost preview per unique destination square: the piece currently on
- * the move's `from` square in the scored position. First (brightest) move
- * wins when several land on the same square.
+ * the move's `from` square. Thinking ghosts are uniform (tier -1) — Laya
+ * scores everything in one pass, so nothing is brighter than anything else
+ * yet. First move wins when several land on the same square.
  */
-function buildGhosts(
-  trails: TrailMove[] | null,
-  fen: string | null,
-  resolved: boolean
-): Map<string, GhostInfo> {
+function buildGhosts(trails: TrailMove[] | null, fen: string): Map<string, GhostInfo> {
   const ghosts = new Map<string, GhostInfo>();
   if (!trails || !fen) return ghosts;
-  trails.forEach((t, idx) => {
+  trails.forEach((t) => {
     if (ghosts.has(t.to)) return;
     const piece = getPieceAt(fen, t.from);
     if (!piece) return;
-    ghosts.set(t.to, {
-      pieceKey: `${piece.color}${piece.type}`,
-      tier: resolved ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1,
-    });
+    ghosts.set(t.to, { pieceKey: `${piece.color}${piece.type}`, tier: -1 });
   });
   return ghosts;
 }
@@ -80,9 +75,6 @@ export default function App() {
   // calibration panel keeps showing black's reasoning instead of going stale.
   const [decisionCandidates, setDecisionCandidates] = useState<CandidateMove[] | null>(null);
   const [decisionMaterialEvals, setDecisionMaterialEvals] = useState<MaterialEval[] | null>(null);
-  // FEN of the scored (black-to-move) position — ghost previews read the
-  // mover off this board, not the live snapshot which has moved on.
-  const [decisionFen, setDecisionFen] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tally, setTally] = useState({ agree: 0, disagree: 0 });
   // Last played move (white or black): Board slides the glyph from->to.
@@ -92,14 +84,27 @@ export default function App() {
     pieceKey: string;
     key: number;
   } | null>(null);
-  // Previous resolved trails, kept mounted briefly so they fade out (600ms
-  // CSS transition) instead of cutting when a new considering phase starts.
-  const [fadingTrails, setFadingTrails] = useState<TrailMove[] | null>(null);
-  const fadeTimeoutRef = useRef<number | null>(null);
+  // Board overlay rule: ghost view (considering lines + ghosts) while Laya
+  // thinks, then ONLY the single played line under the sliding piece once
+  // a move lands. No persistent candidate lines stay on the board — Laya's
+  // reasoning lives in the calibration panel, never as leftover lines.
   // Ghosts + lines appear the instant the human moves (no delay) and blink
   // while Laya thinks.
   const [consideringVisible, setConsideringVisible] = useState(false);
   const consideringTimeoutRef = useRef<number | null>(null);
+  // Thinking bookkeeping for the banner/panel: when the current wait started
+  // (live timer origin), how many candidates were actually sent in the one
+  // batched request, and how many legal moves the position had. All real.
+  const [thinkingSince, setThinkingSince] = useState<number | null>(null);
+  const [thinkingSent, setThinkingSent] = useState(0);
+  const [thinkingLegal, setThinkingLegal] = useState(0);
+  // Real measured per-request latencies for the session readout + sparkline.
+  // RESET clears this; the next request after a clear is tagged COLD START.
+  const [latencies, setLatencies] = useState<LatencySample[]>([]);
+  const latencyCountRef = useRef(0);
+  // The exact sample measured for the decision on screen (set together with
+  // it, cleared together with it — never a neighbouring request's numbers).
+  const [decisionLatency, setDecisionLatency] = useState<LatencySample | null>(null);
   // Single bright line for the piece currently sliding (white or black).
   // Mounted together with Board's move-anim so the glyph glides ALONG the
   // line while the line slowly vanishes underneath it.
@@ -123,7 +128,6 @@ export default function App() {
 
   useEffect(
     () => () => {
-      if (fadeTimeoutRef.current !== null) window.clearTimeout(fadeTimeoutRef.current);
       if (consideringTimeoutRef.current !== null) {
         window.clearTimeout(consideringTimeoutRef.current);
       }
@@ -160,44 +164,41 @@ export default function App() {
   const materialEvals = evaluateCandidatesByMaterial(snapshot.fen, snapshot.legalMoves);
 
   const isThinking = connectionState === "thinking";
-  // Genuine candidates being weighed right now (black-to-move position).
-  const consideringTrails: TrailMove[] | null = isThinking
-    ? dedupeTrails(
-        snapshot.legalMoves.map((m) => ({ from: m.from, to: m.to, weight: 0 }))
-      ).slice(0, TRAILS_CONSIDERING_CAP)
+  // The exact candidate set being weighed right now: the same deterministic
+  // reduction decideMove sends in its one batched request (no cap here — the
+  // honesty rule says everything lit must light at once, all of it).
+  const sentNow = isThinking ? reduceCandidates(snapshot.legalMoves) : null;
+  const consideringTrails: TrailMove[] | null = sentNow
+    ? dedupeTrails(sentNow.map((m) => ({ from: m.from, to: m.to, weight: 0 })))
     : null;
-  const resolvedTrails: TrailMove[] | null =
-    decision && decisionCandidates ? buildResolvedTrails(decision, decisionCandidates) : null;
-  const showResolved = resolvedTrails && !isThinking;
+  // NOTE: no `resolvedTrails` on the board — after the ghost view hides,
+  // only the single played slideLine is mounted (see overlay below). The
+  // decision still feeds the calibration panel + console log.
+  // The winning candidate's squares, tinted cyan on the board (B.3). Falls
+  // back to lastMove's tint when no decision is on screen.
+  const topPick: { from: string; to: string } | null = (() => {
+    if (!decision?.selectedCandidateId || !decisionCandidates) return null;
+    const c = decisionCandidates.find((m) => m.id === decision.selectedCandidateId);
+    return c ? { from: c.from, to: c.to } : null;
+  })();
+  const lastLatency: LatencySample | null = latencies.length > 0 ? latencies[latencies.length - 1] : null;
 
-  // Ghost preview pulse follows whichever overlay is visible, so both
-  // considering and resolved ghosts vanish and return in sync with lines.
-  // Landing ghost never blinks — it stays pinned while the piece hops to it.
-  const glowPulse = !!(consideringVisible && consideringTrails) || !!showResolved;
+  // Ghost preview pulse follows the thinking overlay, so considering ghosts
+  // vanish and return in sync with the lines. Landing ghost never blinks —
+  // it stays pinned while the piece hops to it.
+  const glowPulse = !!(consideringVisible && consideringTrails);
 
-  // Ghost previews: thinking -> capped legal set (blinking); landing ->
-  // the single destination the piece is travelling to (pinned solid, then
-  // vanishes on arrival); resolved -> scored top-12.
+  // Ghost previews: thinking -> every sent candidate's destination
+  // (blinking); landing -> the single destination the piece is travelling to
+  // (pinned solid, then vanishes on arrival). Deliberately NO ghosts once a
+  // move has landed — reasoning stays in the panel bars only.
   const ghostPieces: Map<string, GhostInfo> =
     landingGhost
       ? new Map([[landingGhost.square, { pieceKey: landingGhost.pieceKey, tier: 0 }]])
       : consideringVisible && consideringTrails
-        ? buildGhosts(consideringTrails, snapshot.fen, false)
-        : showResolved && resolvedTrails
-          ? buildGhosts(resolvedTrails, decisionFen, true)
-          : new Map();
+        ? buildGhosts(consideringTrails, snapshot.fen)
+        : new Map();
   const landingSquares = landingGhost ? new Set([landingGhost.square]) : undefined;
-
-  function stashResolvedTrailsForFade() {
-    if (decision && decisionCandidates) {
-      const stash = buildResolvedTrails(decision, decisionCandidates);
-      if (stash.length > 0) {
-        setFadingTrails(stash);
-        if (fadeTimeoutRef.current !== null) window.clearTimeout(fadeTimeoutRef.current);
-        fadeTimeoutRef.current = window.setTimeout(() => setFadingTrails(null), 700);
-      }
-    }
-  }
 
   async function handleUserMove(candidate: CandidateMove) {
     // The user plays white only — black is Laya's side.
@@ -223,13 +224,14 @@ export default function App() {
           key: next.history.length,
         });
         // White glyph glides along its own line while it slowly vanishes.
+        // showSlideLine replaces any previous line, so the mover's old
+        // line is removed the moment the new one mounts (single line max).
         showSlideLine(candidate.from, candidate.to, next.history.length);
       }
     }
-    stashResolvedTrailsForFade();
     setDecision(null);
+    setDecisionLatency(null);
     setDecisionCandidates(null);
-    setDecisionFen(null);
     setDecisionMaterialEvals(null);
     setErrorMessage(null);
 
@@ -242,6 +244,12 @@ export default function App() {
   async function requestLayaBlackMove(position: GameSnapshot) {
     const requestId = ++requestIdRef.current;
     setConnectionState("thinking");
+    // Honest thinking counts: exactly what decideMove will send (same
+    // deterministic reduction, same input) and the true legal total.
+    const sent = reduceCandidates(position.legalMoves);
+    setThinkingSent(sent.length);
+    setThinkingLegal(position.legalMoves.length);
+    setThinkingSince(performance.now());
     console.log(
       "[trails] considering",
       position.legalMoves.length,
@@ -255,6 +263,7 @@ export default function App() {
     const hideConsidering = () => {
       clearConsideringTimer();
       setConsideringVisible(false);
+      setThinkingSince(null);
     };
     try {
       const result = await decideMove(position.fen, position.legalMoves);
@@ -267,6 +276,19 @@ export default function App() {
           .map((t) => `${t.from}${t.to}:${t.weight.toFixed(2)}`)
           .join(" ")
       );
+      // Session latency history: every number measured, none estimated. The
+      // first entry of the session carries the COLD START tag.
+      const coldStart = latencyCountRef.current === 0;
+      latencyCountRef.current += 1;
+      const sample: LatencySample = {
+        totalMs: result.totalLatencyMs,
+        networkAndServerMs: result.networkAndServerMs,
+        parseMs: result.parseMs,
+        modelMs: result.modelLatencyMs,
+        overheadMs: result.overheadMs,
+        coldStart,
+      };
+      setLatencies((prev) => [...prev, sample]);
 
       const positionMaterialEvals = evaluateCandidatesByMaterial(position.fen, position.legalMoves);
       const topByMaterial = positionMaterialEvals.find((m) => m.rank === 1);
@@ -278,8 +300,8 @@ export default function App() {
       if (!pickId || !picked) {
         console.error("[laya] selected move is not legal:", pickId, result);
         setDecision(result);
+        setDecisionLatency(sample);
         setDecisionCandidates(position.legalMoves);
-        setDecisionFen(position.fen);
         setDecisionMaterialEvals(positionMaterialEvals);
         setConnectionState("connected");
         setErrorMessage(
@@ -295,8 +317,8 @@ export default function App() {
       } catch (err) {
         console.error("[laya] failed to apply picked move:", pickId, err);
         setDecision(result);
+        setDecisionLatency(sample);
         setDecisionCandidates(position.legalMoves);
-        setDecisionFen(position.fen);
         setDecisionMaterialEvals(positionMaterialEvals);
         setConnectionState("connected");
         setErrorMessage((err as Error).message);
@@ -318,17 +340,19 @@ export default function App() {
           // the single bright trail under the sliding piece (L-bend for
           // knights) + pin the destination ghost; both slowly vanish
           // (~1s) while the piece travels (~750-850ms), all gone on landing.
+          // showSlideLine overwrites white's line, so the piece-you-moved
+          // line is removed the moment black's line mounts.
           showSlideLine(picked.from, picked.to, after.history.length);
           showLandingGhost(picked.to, pieceKey, after.history.length);
         }
       }
-      // Thinking ghosts/lines are gone; the played line + sliding piece
-      // take over and dissolve slowly instead of cutting instantly.
-      // (Decision details stay in the console log + session tally.)
-      setDecision(null);
-      setDecisionCandidates(null);
-      setDecisionFen(null);
-      setDecisionMaterialEvals(null);
+      // Decision details stay for the calibration panel only — the board
+      // itself shows just the single played line above, which dissolves on
+      // landing. No candidate lines linger after the move.
+      setDecision(result);
+      setDecisionLatency(sample);
+      setDecisionCandidates(position.legalMoves);
+      setDecisionMaterialEvals(positionMaterialEvals);
       setErrorMessage(null);
       setConnectionState("connected");
     } catch (err) {
@@ -354,29 +378,30 @@ export default function App() {
 
   function handleReset() {
     requestIdRef.current += 1; // invalidate any in-flight decision
-    if (fadeTimeoutRef.current !== null) window.clearTimeout(fadeTimeoutRef.current);
-    setFadingTrails(null);
     if (slideTimeoutRef.current !== null) window.clearTimeout(slideTimeoutRef.current);
     setSlideLine(null);
     if (landingTimeoutRef.current !== null) window.clearTimeout(landingTimeoutRef.current);
     setLandingGhost(null);
     clearConsideringTimer();
     setConsideringVisible(false);
+    setThinkingSince(null);
     setLastMove(null);
     setSnapshot(startingSnapshot());
     setDecision(null);
+    setDecisionLatency(null);
     setDecisionCandidates(null);
-    setDecisionFen(null);
     setDecisionMaterialEvals(null);
     setErrorMessage(null);
     setConnectionState((s) => (s === "thinking" ? "connected" : s));
     setTally({ agree: 0, disagree: 0 });
+    latencyCountRef.current = 0;
+    setLatencies([]);
   }
 
   const bannerText = (() => {
     if (snapshot.isCheckmate) return `CHECKMATE — ${snapshot.turn === "w" ? "BLACK (LAYA)" : "WHITE (YOU)"} WINS`;
     if (snapshot.isStalemate) return "STALEMATE — DRAW";
-    if (connectionState === "thinking") return "LAYA (BLACK) IS WEIGHING ITS REPLY_";
+    if (connectionState === "thinking") return `LAYA IS WEIGHING ALL ${thinkingSent} MOVES AT ONCE`;
     if (connectionState === "unavailable") return "LAYA UNAVAILABLE — CHECK laya-serve IS RUNNING";
     if (connectionState === "timeout") return "LAYA TIMED OUT ON THAT REQUEST";
     if (connectionState === "invalid_response") return "LAYA REPLY DID NOT PARSE — SEE CONSOLE + layaClient.ts";
@@ -408,12 +433,17 @@ export default function App() {
         <div className="header-status">
           <span>
             <span className={`dot ${connectionState === "connected" ? "on" : ""}`} />
-            LOCAL — localhost:8000
+            LOCAL — {serverLabel()} — LAST {lastLatency ? `${lastLatency.totalMs.toFixed(0)} MS` : "—"}
           </span>
         </div>
       </header>
 
-      <div className={`status-banner ${bannerClass}`}>{bannerText}</div>
+      <div className={`status-banner ${bannerClass}`}>
+        {bannerText}
+        {connectionState === "thinking" && (
+          <span className="cursor" aria-hidden="true">_</span>
+        )}
+      </div>
 
       <main>
         <div className="board-section">
@@ -427,16 +457,11 @@ export default function App() {
               ghostPulse={glowPulse}
               landingSquares={landingSquares}
               lastMove={lastMove}
+              topPick={topPick}
               overlay={
                 <>
-                  {fadingTrails && fadingTrails.length > 0 && (
-                    <MoveTrails moves={fadingTrails} mode="resolved" fading />
-                  )}
                   {consideringTrails && consideringVisible && (
                     <MoveTrails moves={consideringTrails} mode="considering" />
-                  )}
-                  {resolvedTrails && !isThinking && (
-                    <MoveTrails moves={resolvedTrails} mode="resolved" />
                   )}
                   {slideLine && (
                     <MoveTrails
@@ -466,8 +491,13 @@ export default function App() {
           <CalibrationPanel
             candidates={decisionCandidates ?? snapshot.legalMoves}
             decision={decision}
+            decisionLatency={decisionLatency}
             materialEvals={decisionMaterialEvals ?? materialEvals}
             connectionState={connectionState}
+            thinkingSent={thinkingSent}
+            thinkingLegal={thinkingLegal}
+            thinkingSince={isThinking ? thinkingSince : null}
+            latencies={latencies}
           />
           <SessionTally agree={tally.agree} disagree={tally.disagree} />
         </section>

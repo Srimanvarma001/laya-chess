@@ -1,0 +1,11 @@
+cburnett chess piece set
+Author: Colin M. L. Burnett (https://en.wikipedia.org/wiki/User:Cburnett)
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
+License: GPLv2+ (as listed in lichess-org/lila COPYING.md:
+  "public/piece/cburnett | Colin M.L. Burnett | GPLv2+").
+  The set is also released by the author under GFDL / BSD / CC BY-SA
+  (see Wikimedia Commons "SVG chess pieces" category).
+
+Files: wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK (.svg)
+Unmodified apart from local filenames matching <color><TYPE> convention.
+No images copied from chess.com.

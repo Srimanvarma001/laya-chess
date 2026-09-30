@@ -13,6 +13,15 @@ import type {
 const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 // Trailing slashes would otherwise produce "//health" / "//v1/systemone".
 const BASE_URL = String(RAW_BASE_URL).replace(/\/+$/, "");
+
+/** Short human label for the header status strip, e.g. "localhost:8000". */
+export function serverLabel(): string {
+  try {
+    return new URL(BASE_URL, window.location.href).host || BASE_URL;
+  } catch {
+    return BASE_URL;
+  }
+}
 const API_KEY = import.meta.env.VITE_LAYA_API_KEY;
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -43,6 +52,9 @@ export class LayaInvalidResponseError extends Error {
   }
 }
 
+/** Set once the first raw payload has been logged (field-name confirmation). */
+let loggedRawShape = false;
+
 export async function checkHealth(): Promise<{ ok: boolean; raw: unknown }> {
   try {
     const res = await fetch(`${BASE_URL}/health`);
@@ -69,7 +81,33 @@ export function reduceCandidates(candidates: CandidateMove[]): CandidateMove[] {
   return scored.slice(0, MAX_CANDIDATES_PER_REQUEST).map((s) => s.c);
 }
 
-function parseModelLatencyMs(res: Response): number | null {
+function asFiniteMs(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/**
+ * Real server-side inference time, read off the response — never guessed.
+ * Body first (the field name varies by Laya version), headers as fallback.
+ * The one-time console.log below pins down which shape this server sends.
+ */
+function parseModelLatencyMsFromBody(raw: any): number | null {
+  if (!raw || typeof raw !== "object") return null;
+  const timing = (raw as any).timing;
+  if (timing && typeof timing === "object") {
+    for (const key of ["model_ms", "modelMs", "inference_ms", "inferenceMs", "dur_ms", "duration_ms"]) {
+      const n = asFiniteMs(timing[key]);
+      if (n !== null) return n;
+    }
+  }
+  for (const key of ["model_ms", "modelMs", "model_latency_ms", "inference_ms", "inferenceMs", "latency_ms", "latencyMs"]) {
+    const n = asFiniteMs((raw as any)[key]);
+    if (n !== null) return n;
+  }
+  return null;
+}
+
+function parseModelLatencyMsFromHeaders(res: Response): number | null {
   // The real server reports inference time in headers, not the body:
   //   X-Inference-Time-Ms: 123.45
   //   Server-Timing: inference;dur=123.45
@@ -94,14 +132,15 @@ function parseModelLatencyMs(res: Response): number | null {
  * (section 11: never one HTTP call per legal move). Uses Laya's `choice`
  * typed-decision format against the Jev-compatible /v1/systemone endpoint.
  *
- * Verified against laya 0.3.20 (laya/serve.py + laya/agent.py). The real
- * response body is:
+ * Verified against laya 0.3.20 (laya-rl-agent on uvicorn, probed live):
+ * the real response body is
  *   { model, answers: { best_move: { type, choice, probabilities,
  *     confidence, answer_confidence, action } }, usage, routing }
- * and inference time arrives via the X-Inference-Time-Ms / Server-Timing
- * headers. Parsing below still tolerates older/alternative shapes
- * (`results.best_move`, `selected`) so a version skew shows up as data,
- * not a crash.
+ * with NO timing field in the body and NO X-Inference-Time-Ms /
+ * Server-Timing headers, so modelLatencyMs is null ("n/a") on this server
+ * version and overheadMs with it. Parsing below still tolerates
+ * older/alternative shapes (`results.best_move`, `selected`, body timing
+ * fields, timing headers) so a version skew shows up as data, not a crash.
  */
 export async function decideMove(
   fen: string,
@@ -139,7 +178,12 @@ export async function decideMove(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  const requestStart = performance.now();
+  // Real wall-clock breakdown for the latency readout (honesty rule: every
+  // number below is a measured performance.now() delta, nothing estimated):
+  //   t0 = just before fetch
+  //   t1 = fetch resolved (response headers received)
+  //   t2 = after res.json() completes
+  const t0 = performance.now();
 
   let res: Response;
   try {
@@ -160,9 +204,7 @@ export async function decideMove(
     throw new LayaUnavailableError("Could not reach the Laya server. Is it running?");
   }
   clearTimeout(timeout);
-
-  const totalLatencyMs = performance.now() - requestStart;
-  const modelLatencyMs = parseModelLatencyMs(res);
+  const t1 = performance.now();
 
   if (!res.ok) {
     let detail = "";
@@ -195,6 +237,23 @@ export async function decideMove(
   } catch {
     throw new LayaInvalidResponseError("Laya response was not valid JSON.");
   }
+  const t2 = performance.now();
+
+  // Log the untouched payload ONCE per session so the real timing field name
+  // for this Laya version can be confirmed by eye (see the body parser above).
+  if (!loggedRawShape) {
+    loggedRawShape = true;
+    console.log("[laya] raw response shape (first request):", raw);
+  }
+
+  const networkAndServerMs = t1 - t0;
+  const parseMs = t2 - t1;
+  const totalLatencyMs = t2 - t0;
+  const modelLatencyMs = parseModelLatencyMsFromBody(raw) ?? parseModelLatencyMsFromHeaders(res);
+  // Server routing, tokenizing, HTTP, JSON — whatever the total covers that
+  // the server's own inference timer does not. Null (shown as "n/a") when the
+  // server reports no inference time, instead of guessing.
+  const overheadMs = modelLatencyMs !== null ? Math.max(0, totalLatencyMs - modelLatencyMs) : null;
 
   const answer = raw?.answers?.best_move ?? raw?.results?.best_move ?? raw?.best_move;
   const routing = raw?.routing ?? null;
@@ -246,6 +305,11 @@ export async function decideMove(
     selectedCandidateId,
     modelLatencyMs,
     totalLatencyMs,
+    networkAndServerMs,
+    parseMs,
+    overheadMs,
+    sentCandidateCount: trimmed.length,
+    legalCandidateCount: candidates.length,
     confidence,
     answerConfidence,
     routingModel,

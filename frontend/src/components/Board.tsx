@@ -2,15 +2,20 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { Chess } from "chess.js";
 import type { CandidateMove, GhostInfo } from "../types";
 import { getLegalMoves } from "../chess/engine";
-import { isKnightJump, knightCorner, squareCenter, TRAIL_SQUARE_PX } from "./MoveTrails";
+import { getSquareSizePx, isKnightJump, knightCorner, squareCenter } from "./MoveTrails";
+
+/** Piece artwork set under frontend/public/pieces/. Change one line to try another set. */
+export const PIECE_SET = "cburnett";
+
+/** "wp" / "bN" (any case) -> "/pieces/cburnett/wP.svg" (files use uppercase type). */
+function pieceSrc(pieceKey: string): string {
+  const color = pieceKey[0];
+  const type = pieceKey.slice(1).toUpperCase();
+  return `/pieces/${PIECE_SET}/${color}${type}.svg`;
+}
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
-
-const UNICODE_PIECES: Record<string, string> = {
-  wp: "♙", wn: "♘", wb: "♗", wr: "♖", wq: "♕", wk: "♔",
-  bp: "♟", bn: "♞", bb: "♝", br: "♜", bq: "♛", bk: "♚",
-};
 
 interface BoardProps {
   fen: string;
@@ -23,8 +28,11 @@ interface BoardProps {
   ghostPulse?: boolean;
   /** Squares whose ghosts stay pinned (no blink) while the piece hops to them. */
   landingSquares?: Set<string>;
-  /** Last played move: glyph slides from->to once, then rests. */
+  /** Last played move: square tint (from+to) + glyph slides from->to once, then rests. */
   lastMove?: { from: string; to: string; pieceKey: string; key: number } | null;
+  /** Decision top pick: its from/to squares get the same cyan tint even when
+   * no fresh slide just played there (e.g. the illegal-pick error path). */
+  topPick?: { from: string; to: string } | null;
   /** Called with the candidate move the user picked. This is the ONLY way a
    * move reaches the game state — there is no free-text or coordinate input,
    * so illegal moves are unreachable through the UI by construction. */
@@ -40,6 +48,7 @@ export function Board({
   ghostPulse,
   landingSquares,
   lastMove,
+  topPick,
 }: BoardProps) {
   const [selected, setSelected] = useState<string | null>(null);
   // Active slide animation: hides the static destination glyph while the
@@ -63,6 +72,25 @@ export function Board({
   }, [fen]);
 
   const board = useMemo(() => new Chess(fen).board(), [fen]);
+  // King square of the side to move when it is in check -> soft red glow.
+  const checkSquare = useMemo(() => {
+    try {
+      const chess = new Chess(fen);
+      if (!chess.inCheck()) return null;
+      const turn = chess.turn();
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          const cell = board[r][f];
+          if (cell && cell.type === "k" && cell.color === turn) {
+            return `${FILES[f]}${RANKS[r]}`;
+          }
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [fen, board]);
   const legalFromSelected: CandidateMove[] = useMemo(
     () => (selected ? getLegalMoves(fen, selected) : []),
     [fen, selected]
@@ -107,6 +135,10 @@ export function Board({
           const isDark = (rankIdx + fileIdx) % 2 === 1;
           const isSelected = selected === square;
           const isDestination = destinationSquares.has(square);
+          const isLastMove = lastMove != null && (square === lastMove.from || square === lastMove.to);
+          const isTopPick = topPick != null && (square === topPick.from || square === topPick.to);
+          const isCheck = checkSquare === square;
+          const isCapture = isDestination && cell != null;
 
           const ghost = ghostPieces?.get(square);
 
@@ -118,23 +150,44 @@ export function Board({
                 isDark ? "dark" : "light",
                 isSelected ? "selected" : "",
                 isDestination ? "destination" : "",
+                isLastMove || isTopPick ? "last-move" : "",
+                isCheck ? "in-check" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
               onClick={() => handleSquareClick(square)}
               aria-label={square}
             >
+              {/* chess.com-style inside-edge coordinates: ranks down the
+                  a-file (top-left), files along rank 1 (bottom-right), in
+                  the opposite color of the square. */}
+              {fileIdx === 0 && (
+                <span className="coord coord-rank" aria-hidden="true">
+                  {rank}
+                </span>
+              )}
+              {rank === "1" && (
+                <span className="coord coord-file" aria-hidden="true">
+                  {file}
+                </span>
+              )}
               {cell ? (
                 <span
-                  className={`piece ${cell.color === "w" ? "piece-white" : "piece-black"}${
+                  className={`piece${
                     anim && square === anim.to ? " piece-hidden" : ""
                   }`}
                 >
-                  {UNICODE_PIECES[`${cell.color}${cell.type}`]}
+                  <img
+                    className="piece-img"
+                    src={pieceSrc(`${cell.color}${cell.type}`)}
+                    alt=""
+                    draggable={false}
+                  />
                 </span>
               ) : (
-                isDestination && <span className="dot" />
+                isDestination && <span className="dot" aria-hidden="true" />
               )}
+              {isCapture && <span className="capture-ring" aria-hidden="true" />}
               {ghost && (() => {
                 // Landing ghost: pinned solid at the destination while the
                 // piece hops to it — no blink, dissolves on arrival.
@@ -143,7 +196,6 @@ export function Board({
                   <span
                     className={[
                       "ghost",
-                      ghost.pieceKey[0] === "w" ? "ghost-white" : "ghost-black",
                       ghost.tier >= 0 ? `ghost-tier-${ghost.tier}` : "",
                       isLanding ? "ghost-landing" : ghostPulse ? "ghost-pulse" : "",
                     ]
@@ -151,7 +203,12 @@ export function Board({
                       .join(" ")}
                     aria-hidden="true"
                   >
-                    {UNICODE_PIECES[ghost.pieceKey]}
+                    <img
+                      className="ghost-img"
+                      src={pieceSrc(ghost.pieceKey)}
+                      alt=""
+                      draggable={false}
+                    />
                   </span>
                 );
               })()}
@@ -164,7 +221,7 @@ export function Board({
       {anim && (() => {
         const a = squareCenter(anim.from);
         const b = squareCenter(anim.to);
-        const half = TRAIL_SQUARE_PX / 2;
+        const half = getSquareSizePx() / 2;
         // Knights hop the L (long leg first) to their waiting ghost —
         // same corner as the trail polyline so glyph rides the line.
         const knight = isKnightJump(anim.from, anim.to);
@@ -184,13 +241,16 @@ export function Board({
         return (
           <span
             key={anim.key}
-            className={`move-anim ${
-              anim.pieceKey[0] === "w" ? "ghost-white" : "ghost-black"
-            }${knight ? " move-knight" : ""}`}
+            className={`move-anim${knight ? " move-knight" : ""}`}
             style={style}
             aria-hidden="true"
           >
-            {UNICODE_PIECES[anim.pieceKey]}
+            <img
+              className="move-anim-img"
+              src={pieceSrc(anim.pieceKey)}
+              alt=""
+              draggable={false}
+            />
           </span>
         );
       })()}

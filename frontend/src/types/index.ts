@@ -58,8 +58,20 @@ export interface LayaMoveScore {
 export interface LayaDecisionResponse {
   scores: LayaMoveScore[];
   selectedCandidateId: string | null;
+  /** Real server-side inference time, when the server reports it. Null = "n/a", never guessed. */
   modelLatencyMs: number | null;
+  /** Wall-clock time for the whole decideMove call: fetch + server + JSON parse. */
   totalLatencyMs: number;
+  /** Time from just-before-fetch until response headers arrived (network + server). */
+  networkAndServerMs: number;
+  /** Time spent in res.json() after headers arrived. */
+  parseMs: number;
+  /** totalLatencyMs - modelLatencyMs (routing, tokenizing, HTTP, JSON). Null when modelMs is unknown. */
+  overheadMs: number | null;
+  /** How many candidates were actually sent in the one batched request. */
+  sentCandidateCount: number;
+  /** How many legal moves the scored position had (before any candidate filter). */
+  legalCandidateCount: number;
   /** 1 - normalised entropy over the candidate distribution (real `confidence` field). */
   confidence: number | null;
   /** Calibrated P(reported answer is correct) — the single number to gate on. */
@@ -85,4 +97,20 @@ export interface MaterialEval {
   candidateId: string;
   materialDelta: number; // material change for the side to move, from this one move
   rank: number; // 1 = best by this heuristic
+}
+
+/**
+ * One real, measured request for the session latency readout. Every field
+ * comes from performance.now() timestamps around a single fetch — nothing
+ * here is estimated. modelMs/overheadMs are null when the server does not
+ * report inference time (shown as "n/a").
+ */
+export interface LatencySample {
+  totalMs: number;
+  networkAndServerMs: number;
+  parseMs: number;
+  modelMs: number | null;
+  overheadMs: number | null;
+  /** True for the very first request of the session (usually slower). */
+  coldStart: boolean;
 }

@@ -1,10 +1,107 @@
-import type { CandidateMove, LayaDecisionResponse, MaterialEval } from "../types";
+import { useEffect, useState } from "react";
+import type { CandidateMove, LayaDecisionResponse, LatencySample, MaterialEval } from "../types";
 
 interface CalibrationPanelProps {
   candidates: CandidateMove[];
   decision: LayaDecisionResponse | null;
+  /** The exact measured sample for `decision` (set/cleared with it). Null = none yet. */
+  decisionLatency: LatencySample | null;
   materialEvals: MaterialEval[];
   connectionState: string;
+  /** Candidates actually sent in the one in-flight request (thinking view). */
+  thinkingSent: number;
+  /** Legal moves in the scored position (thinking view denominator). */
+  thinkingLegal: number;
+  /** performance.now() origin of the in-flight wait. Null when not thinking. */
+  thinkingSince: number | null;
+  /** Real measured per-request totals for the session stats + sparkline. */
+  latencies: LatencySample[];
+}
+
+/** Total-latency color bands for the readout (C.4). */
+export const LATENCY_GREEN_MAX_MS = 250;
+export const LATENCY_AMBER_MAX_MS = 1000;
+
+export function latencyClass(totalMs: number): "lat-green" | "lat-amber" | "lat-red" {
+  if (totalMs < LATENCY_GREEN_MAX_MS) return "lat-green";
+  if (totalMs <= LATENCY_AMBER_MAX_MS) return "lat-amber";
+  return "lat-red";
+}
+
+const fmtMs = (v: number | null) => (v === null ? "n/a" : `${v.toFixed(0)} MS`);
+
+/**
+ * LIVE TIMER: ticking elapsed-time readout while Laya thinks. Driven by
+ * requestAnimationFrame, throttled to a state update every ~50ms — the
+ * number shown is always performance.now() minus the real request start.
+ */
+function ThinkingTimer({ since }: { since: number }) {
+  const [now, setNow] = useState(() => performance.now());
+  useEffect(() => {
+    let raf = 0;
+    let lastUpdate = 0;
+    const tick = (t: number) => {
+      if (t - lastUpdate >= 50) {
+        lastUpdate = t;
+        setNow(performance.now());
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [since]);
+  return <span className="think-timer">{Math.max(0, now - since).toFixed(0)} MS</span>;
+}
+
+interface LatencyStats {
+  last: number;
+  avg: number;
+  min: number;
+  max: number;
+  p95: number;
+  count: number;
+}
+
+/** LAST / AVG / MIN / MAX / P95 over real measured session totals. */
+export function summarizeLatencies(samples: LatencySample[]): LatencyStats | null {
+  if (samples.length === 0) return null;
+  const totals = samples.map((s) => s.totalMs);
+  const sorted = [...totals].sort((a, b) => a - b);
+  const sum = totals.reduce((a, b) => a + b, 0);
+  // Nearest-rank percentile over the real samples (no interpolation, no model).
+  const p95 = sorted[Math.max(0, Math.ceil(0.95 * sorted.length) - 1)];
+  return {
+    last: totals[totals.length - 1],
+    avg: sum / totals.length,
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+    p95,
+    count: totals.length,
+  };
+}
+
+/** Sparkline of the last 20 real total latencies (SVG polyline). */
+function LatencySparkline({ samples }: { samples: LatencySample[] }) {
+  const windowed = samples.slice(-20).map((s) => s.totalMs);
+  if (windowed.length === 0) return null;
+  const W = 120;
+  const H = 28;
+  const min = Math.min(...windowed);
+  const max = Math.max(...windowed);
+  const span = max - min;
+  const points = windowed
+    .map((v, i) => {
+      const x = windowed.length === 1 ? W / 2 : (i / (windowed.length - 1)) * W;
+      // Flat line mid-height when every sample is identical (span 0 is real data, not an error).
+      const y = span === 0 ? H / 2 : H - 2 - ((v - min) / span) * (H - 4);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg className="sparkline" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <polyline points={points} fill="none" strokeWidth="1.5" />
+    </svg>
+  );
 }
 
 /**
@@ -20,9 +117,15 @@ interface CalibrationPanelProps {
 export function CalibrationPanel({
   candidates,
   decision,
+  decisionLatency,
   materialEvals,
   connectionState,
+  thinkingSent,
+  thinkingLegal,
+  thinkingSince,
+  latencies,
 }: CalibrationPanelProps) {
+  const isThinking = connectionState === "thinking";
   const materialById = new Map(materialEvals.map((m) => [m.candidateId, m]));
   const scoreById = new Map((decision?.scores ?? []).map((s) => [s.candidateId, s]));
 
@@ -40,6 +143,8 @@ export function CalibrationPanel({
   const materialAgrees = topMaterialRank === 1;
   const pct = (p: number) => `${(Math.max(0, Math.min(1, p)) * 100).toFixed(0)}%`;
 
+  const stats = summarizeLatencies(latencies);
+
   return (
     <div className="panel">
       <div className="panel-title">
@@ -47,22 +152,37 @@ export function CalibrationPanel({
         <span className={`status-pill ${connectionState}`}>{connectionState}</span>
       </div>
 
-      {!decision && (
+      {isThinking && thinkingSince !== null && (
+        <>
+          <p className="think-counter">
+            {thinkingSent} / {thinkingLegal} LEGAL MOVES
+          </p>
+          <div className="segments" aria-hidden="true">
+            {Array.from({ length: thinkingSent }).map((_, i) => (
+              <span key={i} className="seg" />
+            ))}
+          </div>
+          <p className="panel-note">ALL OF THEM, AT ONCE</p>
+          <p className="think-elapsed">
+            WAITING <ThinkingTimer key={thinkingSince} since={thinkingSince} />
+          </p>
+        </>
+      )}
+
+      {!decision && !isThinking && (
         <p className="panel-note">
-          {connectionState === "thinking"
-            ? "Weighing every legal move in one pass..."
-            : "Make a move — Laya scores every legal reply for the resulting position."}
+          Make a move — Laya scores every legal reply for the resulting position.
         </p>
       )}
 
-      {decision && !top && (
+      {decision && !top && !isThinking && (
         <p className="panel-note">
           Laya answered for a previous position ({decision.scores.length} candidates) —
           make a move to score the current one.
         </p>
       )}
 
-      {decision && top && (
+      {decision && top && !isThinking && (
         <>
           <p className="headline">
             <span className="move">{top.candidate.san}</span> won{" "}
@@ -76,7 +196,7 @@ export function CalibrationPanel({
             .
           </p>
 
-          {rows.slice(0, 6).map((r, i) => (
+          {rows.slice(0, 5).map((r, i) => (
             <div key={r.candidate.id} className={`bar-row ${i === 0 ? "top" : ""}`}>
               <span className="move-label">{r.candidate.san}</span>
               <div className="bar-track">
@@ -88,16 +208,51 @@ export function CalibrationPanel({
               <span className="pct-label">{pct(r.score!.rawConfidence)}</span>
             </div>
           ))}
-          {rows.length > 6 && (
-            <p className="panel-note">and {rows.length - 6} more, same decision.</p>
+          {rows.length > 5 && (
+            <p className="panel-note">AND {rows.length - 5} MORE, ALL IN THE SAME ANSWER.</p>
           )}
+
+          <div className="latency-block">
+            <div className="latency-title">
+              <span>LATENCY</span>
+              {decisionLatency?.coldStart && <span className="cold-tag">COLD START</span>}
+            </div>
+            <div className="latency-nums">
+              <span>
+                MODEL <b>{fmtMs(decisionLatency?.modelMs ?? null)}</b>
+              </span>
+              <span>
+                OVERHEAD <b>{fmtMs(decisionLatency?.overheadMs ?? null)}</b>
+              </span>
+              <span className={decisionLatency ? latencyClass(decisionLatency.totalMs) : undefined}>
+                TOTAL <b>{decisionLatency ? `${decisionLatency.totalMs.toFixed(0)} MS` : "n/a"}</b>
+              </span>
+            </div>
+            {decisionLatency && decisionLatency.modelMs !== null && decisionLatency.totalMs > 0 && (
+              <div
+                className="latency-bar"
+                role="img"
+                aria-label={`model ${decisionLatency.modelMs.toFixed(0)}ms, overhead ${(decisionLatency.overheadMs ?? 0).toFixed(0)}ms, total ${decisionLatency.totalMs.toFixed(0)}ms`}
+              >
+                <span
+                  className="latency-model"
+                  style={{ width: `${(decisionLatency.modelMs / decisionLatency.totalMs) * 100}%` }}
+                />
+                <span className="latency-overhead" />
+              </div>
+            )}
+            {(!decisionLatency || decisionLatency.modelMs === null) && (
+              <p className="panel-note">MODEL N/A — SERVER REPORTED NO INFERENCE TIME.</p>
+            )}
+          </div>
 
           <div className="meta-row">
             <span>
-              model <b>{decision.modelLatencyMs != null ? `${decision.modelLatencyMs.toFixed(0)}ms` : "?ms"}</b>
+              network+server{" "}
+              <b>{decisionLatency ? `${decisionLatency.networkAndServerMs.toFixed(0)}ms` : "n/a"}</b>
             </span>
             <span>
-              total <b>{decision.totalLatencyMs.toFixed(0)}ms</b>
+              parse <b>{decisionLatency ? `${decisionLatency.parseMs.toFixed(1)}ms` : "n/a"}</b>
             </span>
             <span>
               material rank of pick <b>#{topMaterialRank ?? "?"}</b>
@@ -122,6 +277,22 @@ export function CalibrationPanel({
             {decision.usage ? ` Tokens: ${decision.usage.input_tokens} in.` : ""}
           </p>
         </>
+      )}
+
+      {stats && (
+        <div className="session-block">
+          <div className="latency-title">
+            <span>SESSION — {stats.count} REQUEST{stats.count === 1 ? "" : "S"}</span>
+          </div>
+          <div className="session-grid">
+            <span>LAST <b className={latencyClass(stats.last)}>{stats.last.toFixed(0)} MS</b></span>
+            <span>AVG <b>{stats.avg.toFixed(0)} MS</b></span>
+            <span>MIN <b>{stats.min.toFixed(0)} MS</b></span>
+            <span>MAX <b>{stats.max.toFixed(0)} MS</b></span>
+            <span>P95 <b>{stats.p95.toFixed(0)} MS</b></span>
+          </div>
+          <LatencySparkline samples={latencies} />
+        </div>
       )}
     </div>
   );

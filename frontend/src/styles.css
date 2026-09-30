@@ -3,6 +3,12 @@
    Dark pixel-terminal look: near-black background, lavender accent,
    Silkscreen pixel font throughout. See docs/PROJECT.md §14 for what the
    calibration panel is supposed to communicate.
+
+   Board tokens: --sq-size is the SINGLE source of truth for square
+   geometry — grid, squares, overlay svg, slide animation and eval-bar
+   height all derive from it. --sq-light/--sq-dark are the icy square
+   colors; --trail is the cyan board accent (trails, glows, ghosts).
+   Page chrome (--accent lavender) is intentionally left alone.
 --------------------------------------------------------------------- */
 :root {
   --bg: #0b0b10;
@@ -25,8 +31,20 @@
   --good: #7fd99a;
   --bad: #e8768a;
 
-  --square-light: #ece7da;
-  --square-dark: #5b6478;
+  /* Icy chess.com-style board. Tune against the reference screenshot. */
+  --sq-size: 56px;
+  --sq-light: #e8eff3;
+  --sq-dark: #6a97b3;
+
+  /* Cyan board accent: trails, glow nodes, ghost previews, slide line. */
+  --trail: #29b6f6;
+
+  --last-move: rgba(0, 190, 255, 0.45);
+  --selected: rgba(0, 190, 255, 0.6);
+
+  /* Frosted marble grain: inline feTurbulence noise, desaturated, faint.
+     Overlaid on the flat square color — no external image files. */
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
 
   --font: "Silkscreen", "Courier New", monospace;
 }
@@ -136,7 +154,8 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Eval bar — vertical, reflects material balance, purple-over-dark
+   Eval bar — vertical, reflects material balance. Height tracks the board
+   exactly: 8 squares (+2px to match .board-stack's 1px border each side).
 --------------------------------------------------------------------- */
 .eval-bar-wrap {
   display: flex;
@@ -145,8 +164,8 @@ main {
 }
 
 .eval-bar {
-  width: 14px;
-  height: 434px;
+  width: 16px;
+  height: calc(var(--sq-size) * 8 + 2px);
   border: 1px solid var(--border-bright);
   display: flex;
   flex-direction: column;
@@ -166,7 +185,8 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Board
+   Board — icy blue/white, chess.com style. All geometry derives from
+   --sq-size so everything (grid, overlay, slide anim) scales together.
 --------------------------------------------------------------------- */
 .board-wrap { display: flex; flex-direction: column; align-items: center; }
 
@@ -174,44 +194,135 @@ main {
    The border lives here (not on .board) so grid track (0,0) == svg (0,0). */
 .board-stack {
   position: relative;
-  width: 434px;
-  height: 434px;
+  width: calc(var(--sq-size) * 8 + 2px);
+  height: calc(var(--sq-size) * 8 + 2px);
   border: 1px solid var(--border-bright);
 }
 
 .board {
   display: grid;
-  grid-template-columns: repeat(8, 54px);
-  grid-template-rows: repeat(8, 54px);
+  grid-template-columns: repeat(8, var(--sq-size));
+  grid-template-rows: repeat(8, var(--sq-size));
   border: none;
 }
 
 .square {
-  width: 54px;
-  height: 54px;
+  width: var(--sq-size);
+  height: var(--sq-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.9rem;
   border: none;
   cursor: pointer;
   position: relative;
   padding: 0;
+  isolation: isolate;
 }
-.square.light { background: var(--square-light); }
-.square.dark { background: var(--square-dark); }
-.square.selected { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-bg); }
-.dot {
-  width: 12px;
-  height: 12px;
-  background: var(--accent);
-  opacity: 0.55;
+.square.light {
+  background-color: var(--sq-light);
+  background-image: var(--noise);
+}
+.square.dark {
+  background-color: var(--sq-dark);
+  background-image: var(--noise);
+}
+
+/* Highlight tints sit in ::before (cyan) so the marble texture stays
+   visible underneath; the check glow uses ::after so it paints above. */
+.square.last-move::before,
+.square.selected::before,
+.square.in-check::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.square.last-move::before {
+  background: var(--last-move);
+  z-index: 0;
+}
+.square.selected::before {
+  background: var(--selected);
+  z-index: 0;
+}
+.square.in-check::after {
+  background: radial-gradient(
+    circle,
+    rgba(255, 45, 45, 0.9) 0%,
+    rgba(255, 45, 45, 0.55) 38%,
+    rgba(255, 45, 45, 0.12) 68%,
+    transparent 76%
+  );
+  z-index: 0;
+}
+
+/* Inside-edge coordinates: rank top-left on the a-file, file bottom-right
+   on rank 1, each in the opposite color of its square. */
+.coord {
+  position: absolute;
+  font-size: calc(var(--sq-size) * 0.125);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 4;
+}
+.coord-rank {
+  top: calc(var(--sq-size) * 0.05);
+  left: calc(var(--sq-size) * 0.07);
+}
+.coord-file {
+  bottom: calc(var(--sq-size) * 0.05);
+  right: calc(var(--sq-size) * 0.07);
+}
+.square.light .coord { color: var(--sq-dark); }
+.square.dark .coord { color: var(--sq-light); }
+
+/* Legal destinations: translucent dark-blue dot on empty squares… */
+.square .dot {
+  width: calc(var(--sq-size) * 0.24);
+  height: calc(var(--sq-size) * 0.24);
+  border-radius: 50%;
+  background: rgba(20, 70, 110, 0.35);
   display: block;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
-.piece { line-height: 1; position: relative; z-index: 3; }
+/* …and a capture ring around occupied destinations (chess.com style). */
+.capture-ring {
+  position: absolute;
+  inset: 3%;
+  width: 94%;
+  height: 94%;
+  border: calc(var(--sq-size) * 0.055) solid rgba(20, 70, 110, 0.42);
+  border-radius: 50%;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Real two-color piece set: SVG images, ~92% of the square, centered.
+   pointer-events:none so clicks still hit the square button. */
+.piece {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.piece-img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
 
 /* ---------------------------------------------------------------------
-   Ghost previews — translucent glowing mover on destination squares.
+   Ghost previews — the same SVG piece, translucent with a cyan glow.
    Absolutely centered over the cell (over empty squares and captures
    alike), never interactive, real pieces stay solid underneath/above.
 --------------------------------------------------------------------- */
@@ -221,41 +332,42 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.9rem;
-  line-height: 1;
   pointer-events: none;
   z-index: 1;
   opacity: 0.35;
-  filter: drop-shadow(0 0 5px var(--accent));
+  filter: drop-shadow(0 0 5px var(--trail));
 }
-.ghost-white { color: #ffffff; }
-.ghost-black { color: #121218; }
+.ghost-img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
 .ghost-tier-0 {
   --ghost-peak: 0.85;
   opacity: 0.7;
-  filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 12px var(--accent));
+  filter: drop-shadow(0 0 6px var(--trail)) drop-shadow(0 0 12px var(--trail));
 }
 .ghost-tier-1 {
   --ghost-peak: 0.6;
   opacity: 0.5;
-  filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 9px var(--accent));
+  filter: drop-shadow(0 0 5px var(--trail)) drop-shadow(0 0 9px var(--trail));
 }
 .ghost-tier-2 {
   --ghost-peak: 0.38;
   opacity: 0.35;
-  filter: drop-shadow(0 0 5px var(--accent));
+  filter: drop-shadow(0 0 5px var(--trail));
 }
 /* Thinking blink + glow: ghosts pop in immediately, then blink fast
-   while Laya weighs its reply. Peak opacity comes from the tier above so
-   the top candidate still pops the most. text-shadow adds extra glow
-   without overriding the tier drop-shadow filters. */
+    while Laya weighs its reply. Peak opacity comes from the tier above so
+    the top candidate still pops the most. */
 .ghost {
   --ghost-peak: 0.45;
 }
 .ghost-pulse {
   animation: ghost-blink 1.15s ease-in-out infinite;
   will-change: opacity, transform;
-  text-shadow: 0 0 12px var(--accent), 0 0 24px rgba(185, 166, 255, 0.55);
 }
 @keyframes ghost-blink {
   0%, 100% { opacity: calc(var(--ghost-peak, 0.45) * 0.35); transform: scale(0.94); }
@@ -266,7 +378,6 @@ main {
    ghosts are gone on landing. */
 .ghost-landing {
   opacity: var(--ghost-peak, 0.85);
-  text-shadow: 0 0 14px var(--accent), 0 0 28px rgba(185, 166, 255, 0.7);
   animation: ghost-land 900ms ease forwards;
   will-change: opacity, transform;
 }
@@ -277,34 +388,39 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Played-move slide: glyph glides ALONG its trail line over ~750ms so the
-   piece visibly travels the line while the line slowly dissolves (~1000ms)
-   underneath it. Static destination glyph hides meanwhile (.piece-hidden)
-   to avoid a double image. Glow matches the trail so piece + line read as one.
+   Played-move slide: piece image glides ALONG its trail line over ~750ms
+   so the piece visibly travels the line while the line slowly dissolves
+   (~1000ms) underneath it. Static destination image hides meanwhile
+   (.piece-hidden) to avoid a double image. Glow matches the trail.
 --------------------------------------------------------------------- */
 .piece-hidden { visibility: hidden; }
 .move-anim {
   position: absolute;
   left: 0;
   top: 0;
-  width: 54px;
-  height: 54px;
+  width: var(--sq-size);
+  height: var(--sq-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.9rem;
-  line-height: 1;
   pointer-events: none;
   z-index: 4;
   animation: move-slide 750ms cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
-  filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 16px rgba(185, 166, 255, 0.6));
+  filter: drop-shadow(0 0 8px var(--trail)) drop-shadow(0 0 16px rgba(41, 182, 246, 0.6));
   will-change: transform;
+}
+.move-anim-img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
 }
 @keyframes move-slide {
   from { transform: translate(var(--move-fx), var(--move-fy)) scale(1); }
   to { transform: translate(var(--move-tx), var(--move-ty)) scale(1); }
 }
-/* Knight L-hop: glyph rides the same L-bend as its trail (long leg first),
+/* Knight L-hop: image rides the same L-bend as its trail (long leg first),
    with a little lift at the corner so the jump reads as a hop. */
 .move-anim.move-knight {
   animation: move-slide-knight 850ms cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
@@ -321,29 +437,18 @@ main {
   .move-trails.considering,
   .move-trails.resolved:not(.fading) { animation: none; }
 }
-.piece-white {
-  color: #ffffff;
-  text-shadow:
-    -1px -1px 0 #17161d, 1px -1px 0 #17161d,
-    -1px 1px 0 #17161d, 1px 1px 0 #17161d,
-    0 0 3px rgba(0, 0, 0, 0.8);
-}
-.piece-black {
-  color: #121218;
-  text-shadow:
-    -1px -1px 0 #f4f2fb, 1px -1px 0 #f4f2fb,
-    -1px 1px 0 #f4f2fb, 1px 1px 0 #f4f2fb,
-    0 0 3px rgba(255, 255, 255, 0.6);
-}
 
 /* ---------------------------------------------------------------------
-   Thinking trails overlay — faint purple candidate lines on top of the
+   Thinking trails overlay — faint cyan candidate lines on top of the
    board. Click-through (pointer-events: none) so squares stay clickable.
+   Sized from --sq-size to match the grid exactly.
 --------------------------------------------------------------------- */
 .move-trails {
   position: absolute;
   left: 0;
   top: 0;
+  width: calc(var(--sq-size) * 8);
+  height: calc(var(--sq-size) * 8);
   display: block;
   pointer-events: none;
   z-index: 2;
@@ -352,30 +457,30 @@ main {
 /* var() works here (real CSS) but NOT in SVG presentation attributes. */
 .move-trails line,
 .move-trails polyline {
-  stroke: var(--accent);
+  stroke: var(--trail);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 /* Gradient stops need the accent too — same var() limitation as above. */
 .move-trails .trail-glow-stop {
-  stop-color: var(--accent);
+  stop-color: var(--trail);
 }
 .move-trails.considering {
   animation: trails-blink 1.15s ease-in-out infinite;
   will-change: opacity;
-  filter: drop-shadow(0 0 6px rgba(185, 166, 255, 0.7));
+  filter: drop-shadow(0 0 6px rgba(41, 182, 246, 0.7));
 }
 .move-trails.resolved:not(.fading) {
   animation: trails-vanish 4s ease-in-out infinite;
   will-change: opacity;
 }
-/* Played line: single bright trail under the sliding glyph. No infinite
+/* Played line: single bright trail under the sliding piece. No infinite
    blink — it mounts bright then slowly dissolves (~1000ms) while the
    piece glides along it. Extra glow so line + piece read as one. */
 .move-trails.played {
   opacity: 1;
   transition: opacity 1000ms ease;
-  filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 16px rgba(185, 166, 255, 0.5));
+  filter: drop-shadow(0 0 8px var(--trail)) drop-shadow(0 0 16px rgba(41, 182, 246, 0.5));
 }
 .move-trails.played.fading {
   opacity: 0;
@@ -494,10 +599,11 @@ button:hover { border-color: var(--accent-dim); color: var(--accent); }
 }
 .bar-fill {
   display: block;
-  background: var(--accent);
+  background: var(--trail);
   height: 100%;
+  box-shadow: 0 0 6px rgba(41, 182, 246, 0.55);
 }
-.bar-row.top .bar-fill { background: var(--accent); }
+.bar-row.top .bar-fill { background: var(--trail); }
 .bar-row .pct-label { color: var(--text-muted); text-align: right; }
 
 .panel-note {
@@ -532,3 +638,147 @@ button:hover { border-color: var(--accent-dim); color: var(--accent); }
 .tally-figure.bad { color: var(--bad); }
 .tally-label { font-size: 0.55rem; color: var(--text-muted); margin-top: 0.25rem; }
 .tally-vs { color: var(--text-dim); font-size: 0.7rem; }
+
+/* ---------------------------------------------------------------------
+   Thinking state (A): banner cursor, big counter, segmented bar, timer.
+   Everything pulses in sync (1.15s, same as trails/ghosts) because Laya
+   scores all candidates in ONE forward pass — no sequential animation.
+--------------------------------------------------------------------- */
+.status-banner .cursor {
+  animation: cursor-blink 1s steps(1) infinite;
+}
+@keyframes cursor-blink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+
+.think-counter {
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  color: var(--trail);
+  margin: 0 0 0.6rem;
+  text-shadow: 0 0 10px rgba(41, 182, 246, 0.6);
+}
+
+/* One lit segment per candidate actually sent — the whole row blinks as a
+   single unit (animation on the container) so nothing reads as sequential. */
+.segments {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 0.6rem;
+  animation: seg-pulse 1.15s ease-in-out infinite;
+  will-change: opacity;
+}
+.segments .seg {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 14px;
+  background: var(--trail);
+  box-shadow: 0 0 6px rgba(41, 182, 246, 0.55);
+}
+@keyframes seg-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.think-elapsed {
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0.6rem 0 0;
+}
+.think-timer {
+  color: var(--trail);
+}
+
+/* ---------------------------------------------------------------------
+   Latency readout (C): model vs overhead stacked bar, session stats,
+   sparkline. All numbers measured; missing model time renders as "n/a".
+--------------------------------------------------------------------- */
+.latency-block {
+  border-top: 1px solid var(--border);
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+}
+.latency-title {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.cold-tag {
+  font-size: 0.55rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.latency-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.latency-nums b { color: var(--text); }
+/* Total color bands: green < 250ms, amber <= 1000ms, red above. */
+.lat-green { color: var(--good); }
+.lat-green b { color: var(--good); }
+.lat-amber { color: var(--gold); }
+.lat-amber b { color: var(--gold); }
+.lat-red { color: var(--bad); }
+.lat-red b { color: var(--bad); }
+
+/* Horizontal stacked bar: solid cyan = model, dim cyan = overhead, so it
+   is obvious where the time goes. Widths are exact measured fractions. */
+.latency-bar {
+  display: flex;
+  height: 12px;
+  border: 1px solid var(--border-bright);
+  background: rgba(41, 182, 246, 0.12);
+  overflow: hidden;
+}
+.latency-model {
+  display: block;
+  height: 100%;
+  background: var(--trail);
+  box-shadow: 0 0 8px rgba(41, 182, 246, 0.7);
+}
+.latency-overhead {
+  flex: 1;
+  display: block;
+  height: 100%;
+}
+
+.session-block {
+  border-top: 1px solid var(--border);
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+}
+.session-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.session-grid b { color: var(--text); }
+.sparkline {
+  display: block;
+  border: 1px solid var(--border);
+  background: var(--panel-raised);
+}
+.sparkline polyline {
+  stroke: var(--trail);
+  filter: drop-shadow(0 0 3px rgba(41, 182, 246, 0.7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segments,
+  .status-banner .cursor { animation: none; }
+}
