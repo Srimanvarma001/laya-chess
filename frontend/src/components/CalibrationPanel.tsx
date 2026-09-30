@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import type { CandidateMove, LayaDecisionResponse, LatencySample, MaterialEval } from "../types";
 
 interface CalibrationPanelProps {
@@ -12,8 +11,6 @@ interface CalibrationPanelProps {
   thinkingSent: number;
   /** Legal moves in the scored position (thinking view denominator). */
   thinkingLegal: number;
-  /** performance.now() origin of the in-flight wait. Null when not thinking. */
-  thinkingSince: number | null;
   /** Real measured per-request totals for the session stats + sparkline. */
   latencies: LatencySample[];
   /** Legal moves in the live position (shown before any decision). */
@@ -31,29 +28,6 @@ export function latencyClass(totalMs: number): "lat-green" | "lat-amber" | "lat-
 }
 
 const fmtMs = (v: number | null) => (v === null ? "n/a" : `${v.toFixed(0)} MS`);
-
-/**
- * LIVE TIMER: ticking elapsed-time readout while Laya thinks. Driven by
- * requestAnimationFrame, throttled to a state update every ~50ms — the
- * number shown is always performance.now() minus the real request start.
- */
-function ThinkingTimer({ since }: { since: number }) {
-  const [now, setNow] = useState(() => performance.now());
-  useEffect(() => {
-    let raf = 0;
-    let lastUpdate = 0;
-    const tick = (t: number) => {
-      if (t - lastUpdate >= 50) {
-        lastUpdate = t;
-        setNow(performance.now());
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [since]);
-  return <span className="think-timer">{Math.max(0, now - since).toFixed(0)} MS</span>;
-}
 
 interface LatencyStats {
   last: number;
@@ -124,7 +98,6 @@ export function CalibrationPanel({
   connectionState,
   thinkingSent,
   thinkingLegal,
-  thinkingSince,
   latencies,
   currentLegal,
 }: CalibrationPanelProps) {
@@ -184,11 +157,6 @@ export function CalibrationPanel({
         </>
       )}
 
-      {isThinking && thinkingSince !== null && (
-        <p className="think-elapsed">
-          WAITING <ThinkingTimer key={thinkingSince} since={thinkingSince} />
-        </p>
-      )}
 
       {!decision && !isThinking && (
         <>

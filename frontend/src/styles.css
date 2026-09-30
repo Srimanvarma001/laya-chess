@@ -382,7 +382,7 @@ main {
 /* Glow = fade fully in, then fully out, on a loop (synced with the lines).
    Starts from 0 so the view fades in rather than popping on. */
 .ghost-pulse {
-  animation: ghost-glow 1.25s ease-in-out infinite;
+  animation: ghost-glow 1s ease-in-out infinite;
   will-change: opacity;
 }
 @keyframes ghost-glow {
@@ -484,7 +484,7 @@ main {
 /* Considering view: thin, steady lavender lines (page accent, not the cyan
    board accent), no glow — it should read as "all of them, at once". */
 .move-trails.considering {
-  animation: trails-glow 1.25s ease-in-out infinite;
+  animation: trails-glow 1s ease-in-out infinite;
   will-change: opacity;
   filter: drop-shadow(0 0 3px var(--ghost-glow)) drop-shadow(0 0 7px var(--ghost-glow));
 }
@@ -510,7 +510,7 @@ main {
 .move-trails.fading {
   opacity: 0;
 }
-/* Glow during thinking: fade fully in and out (synced 1.25s with ghosts). */
+/* Glow during thinking: fade fully in and out (synced 1s with ghosts). */
 @keyframes trails-glow {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
@@ -712,16 +712,6 @@ button:hover { border-color: var(--accent-dim); color: var(--accent); }
 @keyframes seg-pulse {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
-}
-
-.think-elapsed {
-  font-size: 0.65rem;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin: 0.6rem 0 0;
-}
-.think-timer {
-  color: var(--trail);
 }
 
 /* ---------------------------------------------------------------------

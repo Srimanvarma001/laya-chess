@@ -81,6 +81,11 @@ pip install -r scripts/requirements.txt   # adds python-chess, used by the bench
 
 ### 0.4 Start Laya
 
+**Windows: use `python scripts/serve_laya.py` in place of `laya-serve`
+everywhere below.** It is the same server, but opts the process out of
+Windows power throttling, which otherwise parks it on the slow efficiency
+cores of hybrid Intel CPUs. Measured: ~1000 ms → ~520 ms per 20-move request.
+
 CPU:
 
 ```powershell

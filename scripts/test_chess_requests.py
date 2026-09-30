@@ -7,7 +7,7 @@ logic gets involved (section 9 of PROJECT.md).
 
 Usage:
     python scripts/test_chess_requests.py
-    python scripts/test_chess_requests.py --base-url http://localhost:8000
+    python scripts/test_chess_requests.py --base-url http://127.0.0.1:8000
 """
 
 import argparse
@@ -39,7 +39,7 @@ def post_json(url: str, payload: dict, api_key: str | None, timeout: float = 30.
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-url", default="http://localhost:8000")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--api-key", default=None)
     args = parser.parse_args()
 

@@ -13,7 +13,7 @@ first; see GETTING_STARTED.md.
 
 Usage:
     pip install -r scripts/requirements.txt
-    python scripts/benchmark_laya.py --base-url http://localhost:8000
+    python scripts/benchmark_laya.py --base-url http://127.0.0.1:8000
 """
 
 from __future__ import annotations
@@ -126,7 +126,7 @@ def run_real_position_test(base_url: str, api_key: str | None) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-url", default="http://localhost:8000")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--api-key", default=None)
     args = parser.parse_args()
 

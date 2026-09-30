@@ -10,7 +10,7 @@ A local-only chess prototype that tests whether **Laya** (an external Python dec
 
 Laya server (separate terminal, from repo root with `.venv` activated), listens on `:8000`:
 ```powershell
-$env:LAYA_DEVICE="cpu"; $env:LAYA_PRELOAD="1"; laya-serve
+$env:LAYA_DEVICE="cpu"; $env:LAYA_PRELOAD="1"; python scripts/serve_laya.py   # = laya-serve with Windows power throttling off (~2x faster here)
 ```
 
 Frontend (`frontend/`):
@@ -25,7 +25,7 @@ Python scripts (`pip install -r scripts/requirements.txt` for python-chess):
 ```bash
 python scripts/test_chess_requests.py            # /health + one raw /v1/systemone call
 python scripts/generate_positions.py             # writes docs/experiments/positions.json
-python scripts/benchmark_laya.py --base-url http://localhost:8000
+python scripts/benchmark_laya.py --base-url http://127.0.0.1:8000
 ```
 Benchmark results go in `docs/experiments/`.
 
@@ -42,6 +42,8 @@ The codebase follows an "honesty rule": what the UI shows (counts, confidences, 
 
 ## Gotchas
 
-- `laya-serve` 0.3.20 has no CORS middleware, so a browser calling `:8000` directly fails preflight. `vite.config.ts` proxies `/api` → `http://localhost:8000`, so set `VITE_API_BASE_URL=/api` in `.env.local` (the `.env.example` default of `http://localhost:8000` hits CORS).
+- `laya-serve` 0.3.20 has no CORS middleware, so a browser calling `:8000` directly fails preflight. `vite.config.ts` proxies `/api` → `:8000`, so the frontend uses `VITE_API_BASE_URL=/api`.
+- On Windows (Intel hybrid CPU), a plain `laya-serve` gets power-throttled onto E-cores: ~1000 ms vs ~520 ms for a 20-candidate request. Start it via `scripts/serve_laya.py`. `LAYA_THREADS` and `LAYA_CPU_AMP=bf16` were both measured slower than the default.
+- From Python on Windows, use `127.0.0.1`, not `localhost`: `localhost` tries IPv6 first and adds ~2 s per request.
 - `VITE_LAYA_API_KEY` is baked into the bundle. That is acceptable only for localhost (see `docs/experiments/security-notes.md`).
 - Request timeout is 15s (`REQUEST_TIMEOUT_MS` in `layaClient.ts`).

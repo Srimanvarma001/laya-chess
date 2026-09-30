@@ -19,9 +19,9 @@ import type { CandidateMove, GameSnapshot, GhostInfo, LayaConnectionState, LayaD
 const TRAILS_RESOLVED_CAP = 12;
 /** Beat between the human's move and the ghost view fading in. */
 const GHOST_VIEW_DELAY_MS = 450;
-/** Minimum time the ghost view stays up: 2 full 1.25s glow cycles (styles.css
+/** Minimum time the ghost view stays up: 2 full 1s glow cycles (styles.css
  * ghost-glow/trails-glow), so it ends on a fade-out, not mid-glow. */
-const GHOST_VIEW_MIN_MS = 2500;
+const GHOST_VIEW_MIN_MS = 2000;
 
 /**
  * One ghost preview per unique destination square: the piece currently on
@@ -97,10 +97,9 @@ export default function App() {
   // while Laya thinks.
   const [consideringVisible, setConsideringVisible] = useState(false);
   const consideringTimeoutRef = useRef<number | null>(null);
-  // Thinking bookkeeping for the banner/panel: when the current wait started
-  // (live timer origin), how many candidates were actually sent in the one
-  // batched request, and how many legal moves the position had. All real.
-  const [thinkingSince, setThinkingSince] = useState<number | null>(null);
+  // Thinking bookkeeping for the banner/panel: how many candidates were
+  // actually sent in the one batched request, and how many legal moves the
+  // position had. All real.
   const [thinkingSent, setThinkingSent] = useState(0);
   const [thinkingLegal, setThinkingLegal] = useState(0);
   // Real measured per-request latencies for the session readout + sparkline.
@@ -254,7 +253,6 @@ export default function App() {
     const sent = reduceCandidates(position.legalMoves);
     setThinkingSent(sent.length);
     setThinkingLegal(position.legalMoves.length);
-    setThinkingSince(performance.now());
     console.log(
       "[trails] considering",
       position.legalMoves.length,
@@ -273,17 +271,15 @@ export default function App() {
     const hideConsidering = () => {
       clearConsideringTimer();
       setConsideringVisible(false);
-      setThinkingSince(null);
     };
     try {
       const result = await decideMove(position.fen, position.legalMoves);
       if (requestIdRef.current !== requestId) return; // a newer move superseded this one
       // Purely visual hold so the ghost view gets its full glow cycles.
       // Latency numbers were already measured inside decideMove, and the
-      // live WAITING timer stops now — the hold is never counted as Laya time.
+      // hold is never counted as Laya time.
       const holdMs = ghostViewUntil - performance.now();
       if (holdMs > 0) {
-        setThinkingSince(null);
         await new Promise((resolve) => window.setTimeout(resolve, holdMs));
         if (requestIdRef.current !== requestId) return; // reset during the hold
       }
@@ -403,7 +399,6 @@ export default function App() {
     setLandingGhost(null);
     clearConsideringTimer();
     setConsideringVisible(false);
-    setThinkingSince(null);
     setLastMove(null);
     setSnapshot(startingSnapshot());
     setDecision(null);
@@ -516,7 +511,6 @@ export default function App() {
             connectionState={connectionState}
             thinkingSent={thinkingSent}
             thinkingLegal={thinkingLegal}
-            thinkingSince={isThinking ? thinkingSince : null}
             latencies={latencies}
             currentLegal={snapshot.legalMoves.length}
           />
