@@ -109,6 +109,8 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
   // Knight trails also glow their L-corner so the bend reads clearly.
   const glows = new Map<string, { x: number; y: number; tier: number }>();
   moves.forEach((m, idx) => {
+    // Considering view is plain thin lines + ghosts, no glow nodes.
+    if (mode === "considering") return;
     const tier =
       mode === "played" ? 0 : mode === "resolved" ? (idx === 0 ? 0 : idx <= 2 ? 1 : 2) : -1;
     for (const sq of [m.from, m.to]) {
@@ -174,7 +176,7 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
         // thickness both grow with it, so the bars and the trails agree.
         const norm = mode === "resolved" && topWeight > 0 ? w / topWeight : w;
         const strokeWidth =
-          tier === 0 ? 3 : tier === 1 ? 1.75 + 1.25 * norm : tier === 2 ? 1 + 1.25 * norm : 1.5;
+          tier === 0 ? 3 : tier === 1 ? 1.75 + 1.25 * norm : tier === 2 ? 1 + 1.25 * norm : 2;
         const opacity =
           tier === 0
             ? 0.9
@@ -182,7 +184,7 @@ export function MoveTrails({ moves, mode, fading = false }: MoveTrailsProps) {
               ? 0.3 + 0.55 * norm
               : tier === 2
                 ? 0.12 + 0.45 * norm
-                : 0.15;
+                : 0.85;
         // Knights hop an L: draw the bend (long leg first), never a straight cut.
         if (isKnightJump(m.from, m.to)) {
           const c = knightCorner(a, b);

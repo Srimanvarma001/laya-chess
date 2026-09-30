@@ -16,6 +16,8 @@ interface CalibrationPanelProps {
   thinkingSince: number | null;
   /** Real measured per-request totals for the session stats + sparkline. */
   latencies: LatencySample[];
+  /** Legal moves in the live position (shown before any decision). */
+  currentLegal: number;
 }
 
 /** Total-latency color bands for the readout (C.4). */
@@ -124,6 +126,7 @@ export function CalibrationPanel({
   thinkingLegal,
   thinkingSince,
   latencies,
+  currentLegal,
 }: CalibrationPanelProps) {
   const isThinking = connectionState === "thinking";
   const materialById = new Map(materialEvals.map((m) => [m.candidateId, m]));
@@ -145,6 +148,20 @@ export function CalibrationPanel({
 
   const stats = summarizeLatencies(latencies);
 
+  // Legal-move counter: live counts while thinking, then the real
+  // sent/legal counts of the position the answer on screen was scored on.
+  const allOf = (sent: number, legal: number, allNote: string) =>
+    sent === legal ? allNote : `TOP ${sent} SENT — CAPTURES, CHECKS, PROMOTIONS FIRST`;
+  const moveCount = isThinking
+    ? { sent: thinkingSent, legal: thinkingLegal, note: allOf(thinkingSent, thinkingLegal, "ALL OF THEM, AT ONCE") }
+    : decision
+      ? {
+          sent: decision.sentCandidateCount,
+          legal: decision.legalCandidateCount,
+          note: allOf(decision.sentCandidateCount, decision.legalCandidateCount, "ALL OF THEM, IN ONE ANSWER"),
+        }
+      : null;
+
   return (
     <div className="panel">
       <div className="panel-title">
@@ -152,27 +169,37 @@ export function CalibrationPanel({
         <span className={`status-pill ${connectionState}`}>{connectionState}</span>
       </div>
 
-      {isThinking && thinkingSince !== null && (
+      {moveCount && (
         <>
           <p className="think-counter">
-            {thinkingSent} / {thinkingLegal} LEGAL MOVES
+            <span className="count-big">{moveCount.sent}</span>
+            <span>/ {moveCount.legal} LEGAL MOVES</span>
           </p>
-          <div className="segments" aria-hidden="true">
-            {Array.from({ length: thinkingSent }).map((_, i) => (
+          <div className={`segments${isThinking ? " live" : ""}`} aria-hidden="true">
+            {Array.from({ length: moveCount.sent }).map((_, i) => (
               <span key={i} className="seg" />
             ))}
           </div>
-          <p className="panel-note">ALL OF THEM, AT ONCE</p>
-          <p className="think-elapsed">
-            WAITING <ThinkingTimer key={thinkingSince} since={thinkingSince} />
-          </p>
+          <p className="panel-note">{moveCount.note}</p>
         </>
       )}
 
-      {!decision && !isThinking && (
-        <p className="panel-note">
-          Make a move — Laya scores every legal reply for the resulting position.
+      {isThinking && thinkingSince !== null && (
+        <p className="think-elapsed">
+          WAITING <ThinkingTimer key={thinkingSince} since={thinkingSince} />
         </p>
+      )}
+
+      {!decision && !isThinking && (
+        <>
+          <p className="think-counter">
+            <span className="count-big">{currentLegal}</span>
+            <span>LEGAL MOVES FOR YOU</span>
+          </p>
+          <p className="panel-note">
+            Make a move — Laya scores every legal reply for the resulting position.
+          </p>
+        </>
       )}
 
       {decision && !top && !isThinking && (

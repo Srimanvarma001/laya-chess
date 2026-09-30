@@ -17,6 +17,11 @@ import type { CandidateMove, GameSnapshot, GhostInfo, LayaConnectionState, LayaD
 
 /** Resolved view keeps only the top-N confidence-weighted trails. */
 const TRAILS_RESOLVED_CAP = 12;
+/** Beat between the human's move and the ghost view fading in. */
+const GHOST_VIEW_DELAY_MS = 450;
+/** Minimum time the ghost view stays up: 2 full 1.25s glow cycles (styles.css
+ * ghost-glow/trails-glow), so it ends on a fade-out, not mid-glow. */
+const GHOST_VIEW_MIN_MS = 2500;
 
 /**
  * One ghost preview per unique destination square: the piece currently on
@@ -256,10 +261,15 @@ export default function App() {
       "legal:",
       position.legalMoves.map((m) => m.id).join(" ")
     );
-    // Ghosts + lines appear IMMEDIATELY on the human move — no 650ms wait —
-    // so the thinking blink/glow starts the same frame the board updates.
+    // Ghosts + lines appear after a short beat so the human's own move
+    // lands first, then stay up for at least GHOST_VIEW_MIN_MS even when
+    // Laya answers sooner (see the hold after decideMove below).
+    const ghostViewUntil = performance.now() + GHOST_VIEW_DELAY_MS + GHOST_VIEW_MIN_MS;
     clearConsideringTimer();
-    setConsideringVisible(true);
+    consideringTimeoutRef.current = window.setTimeout(() => {
+      consideringTimeoutRef.current = null;
+      setConsideringVisible(true);
+    }, GHOST_VIEW_DELAY_MS);
     const hideConsidering = () => {
       clearConsideringTimer();
       setConsideringVisible(false);
@@ -268,6 +278,15 @@ export default function App() {
     try {
       const result = await decideMove(position.fen, position.legalMoves);
       if (requestIdRef.current !== requestId) return; // a newer move superseded this one
+      // Purely visual hold so the ghost view gets its full glow cycles.
+      // Latency numbers were already measured inside decideMove, and the
+      // live WAITING timer stops now — the hold is never counted as Laya time.
+      const holdMs = ghostViewUntil - performance.now();
+      if (holdMs > 0) {
+        setThinkingSince(null);
+        await new Promise((resolve) => window.setTimeout(resolve, holdMs));
+        if (requestIdRef.current !== requestId) return; // reset during the hold
+      }
       hideConsidering();
       console.log("[laya] decision:", result.selectedCandidateId, result);
       console.log(
@@ -406,7 +425,7 @@ export default function App() {
     if (connectionState === "timeout") return "LAYA TIMED OUT ON THAT REQUEST";
     if (connectionState === "invalid_response") return "LAYA REPLY DID NOT PARSE — SEE CONSOLE + layaClient.ts";
     if (snapshot.turn === "b") return "LAYA (BLACK) TO MOVE — WAIT FOR ITS REPLY.";
-    return "YOUR MOVE. WHITE TO PLAY.";
+    return `YOUR MOVE. WHITE HAS ${snapshot.legalMoves.length} LEGAL MOVES.`;
   })();
   const bannerClass =
     connectionState === "unavailable" ||
@@ -477,6 +496,7 @@ export default function App() {
             <div className="game-status">
               <span>material {snapshot.material.white}–{snapshot.material.black}</span>
               <span>{snapshot.history.length} ply</span>
+              <span>{snapshot.legalMoves.length} legal moves</span>
               <span>{snapshot.turn === "w" ? "you: white" : "laya: black"}</span>
               {snapshot.turn === "b" && !snapshot.isGameOver && connectionState !== "thinking" && errorMessage && (
                 <button onClick={handleRetryLaya}>RETRY LAYA</button>
@@ -498,6 +518,7 @@ export default function App() {
             thinkingLegal={thinkingLegal}
             thinkingSince={isThinking ? thinkingSince : null}
             latencies={latencies}
+            currentLegal={snapshot.legalMoves.length}
           />
           <SessionTally agree={tally.agree} disagree={tally.disagree} />
         </section>

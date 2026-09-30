@@ -39,6 +39,10 @@
   /* Cyan board accent: trails, glow nodes, ghost previews, slide line. */
   --trail: #29b6f6;
 
+  /* Thinking ghost view: light grey lines with a faint grey glow. */
+  --ghost-line: #a2a7b0;
+  --ghost-glow: rgba(162, 167, 176, 0.45);
+
   --last-move: rgba(0, 190, 255, 0.45);
   --selected: rgba(0, 190, 255, 0.6);
 
@@ -359,19 +363,30 @@ main {
   opacity: 0.35;
   filter: drop-shadow(0 0 5px var(--trail));
 }
-/* Thinking blink + glow: ghosts pop in immediately, then blink fast
-    while Laya weighs its reply. Peak opacity comes from the tier above so
-    the top candidate still pops the most. */
-.ghost {
-  --ghost-peak: 0.45;
+/* Thinking ghosts (tier -1, no tier class): pale, desaturated, translucent
+   copies of the mover on every candidate destination, no colored glow,
+   breathing gently in sync with the considering lines while Laya weighs
+   its reply. Landing/tier ghosts above keep their glow. */
+.ghost:not([class*="ghost-tier-"]) {
+  /* Soft light grey, no colored glow — like the reference screenshot.
+     Contrast first pulls black AND white art toward mid-grey, then
+     brightness lifts it, so Laya's black pieces read as grey too (a plain
+     brightness() leaves near-black near-black). */
+  --ghost-peak: 0.7;
+  opacity: 0.55;
+  filter: grayscale(1) contrast(0.36) brightness(1.7)
+    /* Tight dark rim so the silhouette edge reads slightly darker. */
+    drop-shadow(0 0 0.8px rgba(70, 74, 82, 0.95)) drop-shadow(0 0 0.4px rgba(70, 74, 82, 0.8));
 }
+/* Glow = fade fully in, then fully out, on a loop (synced with the lines).
+   Starts from 0 so the view fades in rather than popping on. */
 .ghost-pulse {
-  animation: ghost-blink 1.15s ease-in-out infinite;
-  will-change: opacity, transform;
+  animation: ghost-glow 1.25s ease-in-out infinite;
+  will-change: opacity;
 }
-@keyframes ghost-blink {
-  0%, 100% { opacity: calc(var(--ghost-peak, 0.45) * 0.35); transform: scale(0.94); }
-  50% { opacity: var(--ghost-peak, 0.45); transform: scale(1.07); }
+@keyframes ghost-glow {
+  0%, 100% { opacity: 0; }
+  50% { opacity: var(--ghost-peak, 0.65); }
 }
 /* Landing ghost: pinned solid at the destination while the piece travels
    to it — no blink — then dissolves exactly as the glyph arrives, so all
@@ -465,10 +480,16 @@ main {
 .move-trails .trail-glow-stop {
   stop-color: var(--trail);
 }
+/* Considering view: thin, steady lavender lines (page accent, not the cyan
+   board accent), no glow — it should read as "all of them, at once". */
 .move-trails.considering {
-  animation: trails-blink 1.15s ease-in-out infinite;
+  animation: trails-glow 1.25s ease-in-out infinite;
   will-change: opacity;
-  filter: drop-shadow(0 0 6px rgba(41, 182, 246, 0.7));
+  filter: drop-shadow(0 0 3px var(--ghost-glow)) drop-shadow(0 0 7px var(--ghost-glow));
+}
+.move-trails.considering line,
+.move-trails.considering polyline {
+  stroke: var(--ghost-line);
 }
 .move-trails.resolved:not(.fading) {
   animation: trails-vanish 4s ease-in-out infinite;
@@ -488,9 +509,9 @@ main {
 .move-trails.fading {
   opacity: 0;
 }
-/* Fast blink during thinking (synced 1.15s with ghosts). */
-@keyframes trails-blink {
-  0%, 100% { opacity: 0.35; }
+/* Glow during thinking: fade fully in and out (synced 1.25s with ghosts). */
+@keyframes trails-glow {
+  0%, 100% { opacity: 0; }
   50% { opacity: 1; }
 }
 /* Slow dissolve synced with ghosts for resolved views. */
@@ -653,28 +674,39 @@ button:hover { border-color: var(--accent-dim); color: var(--accent); }
 }
 
 .think-counter {
-  font-size: 1.05rem;
-  letter-spacing: 0.05em;
-  color: var(--trail);
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
   margin: 0 0 0.6rem;
-  text-shadow: 0 0 10px rgba(41, 182, 246, 0.6);
+}
+.think-counter .count-big {
+  font-size: 2.4rem;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--accent);
 }
 
-/* One lit segment per candidate actually sent — the whole row blinks as a
-   single unit (animation on the container) so nothing reads as sequential. */
+/* One lit segment per candidate actually sent. While thinking the whole
+   row pulses as a single unit (animation on the container) so nothing
+   reads as sequential; after the answer it stays lit, static. */
 .segments {
   display: flex;
   gap: 3px;
   margin-bottom: 0.6rem;
+}
+.segments.live {
   animation: seg-pulse 1.15s ease-in-out infinite;
   will-change: opacity;
 }
 .segments .seg {
   flex: 1 1 0;
   min-width: 2px;
+  max-width: 14px;
   height: 14px;
-  background: var(--trail);
-  box-shadow: 0 0 6px rgba(41, 182, 246, 0.55);
+  background: var(--accent);
 }
 @keyframes seg-pulse {
   0%, 100% { opacity: 0.35; }
