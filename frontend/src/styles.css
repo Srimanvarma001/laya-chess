@@ -394,20 +394,22 @@ main {
    ghosts are gone on landing. */
 .ghost-landing {
   opacity: var(--ghost-peak, 0.85);
-  animation: ghost-land 900ms ease forwards;
+  animation: ghost-land 620ms ease-out forwards;
   will-change: opacity, transform;
 }
 @keyframes ghost-land {
   0% { opacity: var(--ghost-peak, 0.85); transform: scale(1); }
-  65% { opacity: var(--ghost-peak, 0.85); transform: scale(1.04); }
-  100% { opacity: 0; transform: scale(1.1); }
+  60% { opacity: var(--ghost-peak, 0.85); transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
 }
 
 /* ---------------------------------------------------------------------
-   Played-move slide: piece image glides ALONG its trail line over ~750ms
-   so the piece visibly travels the line while the line slowly dissolves
-   (~1000ms) underneath it. Static destination image hides meanwhile
-   (.piece-hidden) to avoid a double image. Glow matches the trail.
+   Played-move slide: piece image glides ALONG its trail line (380ms
+   straight / 620ms knight — MOVE_SLIDE_MS / MOVE_KNIGHT_MS in Board.tsx)
+   while the line dissolves underneath it. Static destination image hides
+   meanwhile (.piece-hidden) to avoid a double image. The moving piece
+   stays crisp: a soft drop shadow for lift, no blurred glow, and only
+   transform animates (translate3d -> GPU compositor, no repaints).
 --------------------------------------------------------------------- */
 .piece-hidden { visibility: hidden; }
 .move-anim {
@@ -421,9 +423,10 @@ main {
   justify-content: center;
   pointer-events: none;
   z-index: 4;
-  animation: move-slide 750ms cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
-  filter: drop-shadow(0 0 8px var(--trail)) drop-shadow(0 0 16px rgba(41, 182, 246, 0.6));
+  /* Ease-in-out: gentle start, gentle landing, no floaty tail. */
+  animation: move-slide 380ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
   will-change: transform;
+  backface-visibility: hidden;
 }
 .move-anim-img {
   width: 92%;
@@ -431,20 +434,30 @@ main {
   object-fit: contain;
   display: block;
   pointer-events: none;
+  /* Static filter (never animated) so it rasterises once with the layer. */
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.35));
 }
 @keyframes move-slide {
-  from { transform: translate(var(--move-fx), var(--move-fy)) scale(1); }
-  to { transform: translate(var(--move-tx), var(--move-ty)) scale(1); }
+  from { transform: translate3d(var(--move-fx), var(--move-fy), 0); }
+  to { transform: translate3d(var(--move-tx), var(--move-ty), 0); }
 }
-/* Knight L-hop: image rides the same L-bend as its trail (long leg first),
-   with a little lift at the corner so the jump reads as a hop. */
+/* Knight L-hop: image rides the same L-bend as its trail (long leg first).
+   The long leg (2 squares) gets ~2/3 of the time so speed stays even, and
+   per-leg easing (accelerate in, decelerate out) means it never stops dead
+   at the corner. */
 .move-anim.move-knight {
-  animation: move-slide-knight 850ms cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+  animation: move-slide-knight 620ms linear forwards;
 }
 @keyframes move-slide-knight {
-  0% { transform: translate(var(--move-fx), var(--move-fy)) scale(1); }
-  45% { transform: translate(var(--move-mx), var(--move-my)) scale(1.14); }
-  100% { transform: translate(var(--move-tx), var(--move-ty)) scale(1); }
+  0% {
+    transform: translate3d(var(--move-fx), var(--move-fy), 0);
+    animation-timing-function: cubic-bezier(0.45, 0.05, 0.7, 0.9);
+  }
+  64% {
+    transform: translate3d(var(--move-mx), var(--move-my), 0);
+    animation-timing-function: cubic-bezier(0.3, 0.3, 0.25, 1);
+  }
+  100% { transform: translate3d(var(--move-tx), var(--move-ty), 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .move-anim { display: none; }
@@ -501,8 +514,8 @@ main {
    piece glides along it. Extra glow so line + piece read as one. */
 .move-trails.played {
   opacity: 1;
-  transition: opacity 1000ms ease;
-  filter: drop-shadow(0 0 8px var(--trail)) drop-shadow(0 0 16px rgba(41, 182, 246, 0.5));
+  transition: opacity 550ms ease-out;
+  filter: drop-shadow(0 0 3px rgba(41, 182, 246, 0.6));
 }
 .move-trails.played.fading {
   opacity: 0;

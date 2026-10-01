@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Board } from "./components/Board";
+import { Board, MOVE_KNIGHT_MS } from "./components/Board";
 import { CalibrationPanel } from "./components/CalibrationPanel";
 import { SessionTally } from "./components/SessionTally";
 import { EvalBar } from "./components/EvalBar";
@@ -152,17 +152,17 @@ export default function App() {
   function showSlideLine(from: string, to: string, key: number) {
     setSlideLine({ from, to, key });
     if (slideTimeoutRef.current !== null) window.clearTimeout(slideTimeoutRef.current);
-    // Board's glide is ~750ms straight / ~850ms knight L; keep the line a
-    // beat longer so the piece lands before the line fully dissolves.
-    slideTimeoutRef.current = window.setTimeout(() => setSlideLine(null), 1100);
+    // Line dissolves (~550ms CSS) just behind the glide, so the piece lands
+    // before it is fully gone; unmount shortly after.
+    slideTimeoutRef.current = window.setTimeout(() => setSlideLine(null), MOVE_KNIGHT_MS + 250);
   }
 
   /** Pin the destination ghost until the sliding piece lands, then vanish all. */
   function showLandingGhost(square: string, pieceKey: string, key: number) {
     setLandingGhost({ square, pieceKey, key });
     if (landingTimeoutRef.current !== null) window.clearTimeout(landingTimeoutRef.current);
-    // Matches Board's ~900ms anim window: ghost dissolves as glyph arrives.
-    landingTimeoutRef.current = window.setTimeout(() => setLandingGhost(null), 900);
+    // Matches Board's glide: ghost dissolves as the glyph arrives.
+    landingTimeoutRef.current = window.setTimeout(() => setLandingGhost(null), MOVE_KNIGHT_MS + 60);
   }
 
   const materialEvals = evaluateCandidatesByMaterial(snapshot.fen, snapshot.legalMoves);
@@ -354,7 +354,7 @@ export default function App() {
           // Black glyph glides ALONG its line to its waiting ghost: mount
           // the single bright trail under the sliding piece (L-bend for
           // knights) + pin the destination ghost; both slowly vanish
-          // (~1s) while the piece travels (~750-850ms), all gone on landing.
+          // while the piece travels, all gone on landing.
           // showSlideLine overwrites white's line, so the piece-you-moved
           // line is removed the moment black's line mounts.
           showSlideLine(picked.from, picked.to, after.history.length);

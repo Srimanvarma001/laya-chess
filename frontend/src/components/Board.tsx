@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Chess } from "chess.js";
 import type { CandidateMove, GhostInfo } from "../types";
 import { getLegalMoves } from "../chess/engine";
@@ -13,6 +13,10 @@ function pieceSrc(pieceKey: string): string {
   const type = pieceKey.slice(1).toUpperCase();
   return `/pieces/${PIECE_SET}/${color}${type}.svg`;
 }
+
+/** Slide durations — keep in sync with .move-anim / .move-knight in styles.css. */
+export const MOVE_SLIDE_MS = 380;
+export const MOVE_KNIGHT_MS = 620;
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -52,17 +56,23 @@ export function Board({
 }: BoardProps) {
   const [selected, setSelected] = useState<string | null>(null);
   // Active slide animation: hides the static destination glyph while the
-  // animated copy glides ALONG its trail line (~750ms straight, ~850ms
-  // knight L-hop, synced with the played line's slow ~1000ms dissolve).
-  // Keyed so each new move re-triggers.
+  // animated copy glides ALONG its trail line (MOVE_SLIDE_MS straight,
+  // MOVE_KNIGHT_MS knight L-hop). Keyed so each new move re-triggers.
+  // useLayoutEffect, not useEffect: the new FEN already has the piece on its
+  // destination, so the swap to the sliding copy must happen before the
+  // browser paints, or the piece flashes at the destination for a frame and
+  // then jumps back to its origin to start the slide.
   const [anim, setAnim] = useState<typeof lastMove>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!lastMove) {
       setAnim(null);
       return;
     }
     setAnim(lastMove);
-    const t = window.setTimeout(() => setAnim(null), 900);
+    // Slightly past the CSS duration: the copy holds its end pose
+    // (animation-fill-mode: forwards) exactly over the static glyph, so the
+    // hand-off back to the real piece is invisible.
+    const t = window.setTimeout(() => setAnim(null), MOVE_KNIGHT_MS + 60);
     return () => window.clearTimeout(t);
   }, [lastMove]);
 

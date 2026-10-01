@@ -1,0 +1,2338 @@
+{
+ "summary": {
+  "predictor": "material",
+  "set": "k16",
+  "n": 332,
+  "mean_options": 15.30722891566265,
+  "top1": 0.1675436176942201,
+  "top3": 0.3547643872192065,
+  "acpl": 385.67060186717566,
+  "blunder": 0.5441110136516764
+ },
+ "per_position": [
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 438,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 538,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 89.5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 79.33333333333333,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 394,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 44,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 292.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 681,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 452.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.4,
+   "loss": 54,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 71,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 248.0625,
+   "blunder": 0.375,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 713,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.6666666666666667,
+   "loss": 174,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 584,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 435,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.25,
+   "loss": 1133,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 146.25,
+   "blunder": 0.3125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 150,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 765,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 317,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 163,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 776,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 671,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 67.5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 820,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 6,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 613,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 498,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 762.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 80,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 39,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 477.6666666666667,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.5,
+   "loss": 608,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 217.25,
+   "blunder": 0.25,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 501.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 319.6666666666667,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 889,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 258,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 10,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 733,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 912,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 244.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 218.33333333333334,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 15
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 27,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 2.75,
+   "blunder": 0.0,
+   "n_options": 4
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.2571428571428571,
+   "loss": 1365,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 686,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 83,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 11,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 643,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.2,
+   "top3": 0.6,
+   "loss": 31.2,
+   "blunder": 0.0,
+   "n_options": 5
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 36,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 151.3125,
+   "blunder": 0.3125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 38.5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 363.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 336,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 381.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 374.5,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 67,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 1500,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 3
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 220.75,
+   "blunder": 0.25,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 880,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 753,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 100,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 448,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 466,
+   "blunder": 0.5,
+   "n_options": 2
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 269.6666666666667,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 794,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 404.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 401,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 1147,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 107.5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 119.2,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 578,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 723.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 396.75,
+   "blunder": 0.8125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 120,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 1358.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 532,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 319.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 56,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 777.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 385,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 686,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 330,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.5,
+   "loss": 488,
+   "blunder": 1.0,
+   "n_options": 5
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 338.75,
+   "blunder": 0.8125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 805,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 850,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.2,
+   "top3": 0.6,
+   "loss": 198,
+   "blunder": 0.2,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 6.5,
+   "blunder": 0.0,
+   "n_options": 3
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 449.42857142857144,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 47,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 425.6666666666667,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.2,
+   "top3": 0.6,
+   "loss": 24.2,
+   "blunder": 0.0,
+   "n_options": 5
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 246,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 746.3333333333334,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 437.4,
+   "blunder": 0.8,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 321.6666666666667,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 141.8125,
+   "blunder": 0.1875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 114,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 420.8333333333333,
+   "blunder": 0.8333333333333334,
+   "n_options": 16
+  },
+  {
+   "top1": 0.16666666666666666,
+   "top3": 0.5,
+   "loss": 398.8333333333333,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 361,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 37,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 107,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.33333333333333337,
+   "loss": 219.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 548,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 478,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 567.3333333333334,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1428571428571429,
+   "loss": 66,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 280.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 9,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.2571428571428571,
+   "loss": 38,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 624,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 81.1875,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 392,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 630.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 597.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 919,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 21,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 945,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 495.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 309.5,
+   "blunder": 0.5,
+   "n_options": 2
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.5,
+   "loss": 845.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 482.6666666666667,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 814.6666666666666,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 900,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 364.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 614,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 338.25,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 944,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 844,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 453,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 922,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 647.3333333333334,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 642,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 737,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 303,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 567,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 662.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 217.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 671,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 446,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 59.333333333333336,
+   "blunder": 0.0,
+   "n_options": 3
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 808,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 627,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 99.8125,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 165,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 718.25,
+   "blunder": 0.5625,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 31,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 645,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 1,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 92.9375,
+   "blunder": 0.0625,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 217.5,
+   "blunder": 0.1875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 254.75,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 67.3125,
+   "blunder": 0.0625,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 336,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 186,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.125,
+   "top3": 0.35,
+   "loss": 63,
+   "blunder": 0.1875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.07692307692307693,
+   "top3": 0.23076923076923073,
+   "loss": 89.23076923076923,
+   "blunder": 0.0,
+   "n_options": 13
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 219.5625,
+   "blunder": 0.25,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 838.6666666666666,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.125,
+   "top3": 0.375,
+   "loss": 799,
+   "blunder": 0.875,
+   "n_options": 8
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 24,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 804,
+   "blunder": 0.875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 691,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 395,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 206.66666666666666,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 762,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 864,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 430,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 603,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 159,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 45,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 410.1666666666667,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 1269,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 878,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 508,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 66,
+   "blunder": 0.0,
+   "n_options": 2
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 510,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 468,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 18,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 238.5,
+   "blunder": 0.5,
+   "n_options": 3
+  },
+  {
+   "top1": 0.1111111111111111,
+   "top3": 0.33333333333333337,
+   "loss": 726.7777777777778,
+   "blunder": 0.7777777777777778,
+   "n_options": 9
+  },
+  {
+   "top1": 0.07692307692307693,
+   "top3": 0.23076923076923073,
+   "loss": 150.84615384615384,
+   "blunder": 0.23076923076923078,
+   "n_options": 13
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 43,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 607.8,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 848.3333333333334,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 400.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 841,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 620,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 850.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 709,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.14285714285714285,
+   "top3": 0.4285714285714286,
+   "loss": 449.2857142857143,
+   "blunder": 0.8571428571428571,
+   "n_options": 7
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 7,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 275,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 11,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 578.5,
+   "blunder": 0.5,
+   "n_options": 2
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 179.5,
+   "blunder": 0.25,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 814,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 156,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 426.25,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 6,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 653,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 575.6666666666666,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 730.5,
+   "blunder": 0.625,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 318.25,
+   "blunder": 0.25,
+   "n_options": 4
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1428571428571429,
+   "loss": 216,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 22,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 249.75,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 644,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 1163,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 296,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 794,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 42,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 309.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 295,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 850,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 602,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 9,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 482,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.25,
+   "loss": 883,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 1070.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 52,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 334,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 279,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 501,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 33,
+   "blunder": 0.0,
+   "n_options": 15
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 315.125,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 1096.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.16666666666666666,
+   "top3": 0.5,
+   "loss": 517,
+   "blunder": 0.8333333333333334,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.6666666666666667,
+   "loss": 995,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 357.8125,
+   "blunder": 0.6875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 383.125,
+   "blunder": 0.375,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 46,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 153.625,
+   "blunder": 0.1875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 248.625,
+   "blunder": 0.25,
+   "n_options": 16
+  },
+  {
+   "top1": 0.08333333333333333,
+   "top3": 0.25,
+   "loss": 191.5,
+   "blunder": 0.5,
+   "n_options": 12
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.16666666666666663,
+   "loss": 668,
+   "blunder": 1.0,
+   "n_options": 13
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 280.375,
+   "blunder": 0.3125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 14,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 600.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 381.3333333333333,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 298,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 409,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 832,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 339,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 649,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 233.0625,
+   "blunder": 0.375,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 49.3125,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 389.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 51,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1428571428571429,
+   "loss": 623,
+   "blunder": 1.0,
+   "n_options": 15
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.5,
+   "loss": 703,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 271.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 685,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 807,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 167.75,
+   "blunder": 0.3125,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 564,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 87.6875,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 1.0,
+   "loss": 605,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 78,
+   "blunder": 0.0,
+   "n_options": 2
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 636,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 408,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 627.0625,
+   "blunder": 0.625,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 117.33333333333333,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 915.75,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 543.25,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 686.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.2,
+   "top3": 0.6,
+   "loss": 74.8,
+   "blunder": 0.0,
+   "n_options": 5
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.6666666666666667,
+   "loss": 499,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 86,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 558.25,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 874.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 430.5,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 61,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 19,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 362,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 90,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 157,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 762.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 800,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.25,
+   "top3": 0.75,
+   "loss": 383.75,
+   "blunder": 0.75,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 486.2,
+   "blunder": 0.8,
+   "n_options": 16
+  },
+  {
+   "top1": 0.5,
+   "top3": 1.0,
+   "loss": 24.5,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 819.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 782,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0625,
+   "top3": 0.1875,
+   "loss": 140.375,
+   "blunder": 0.1875,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1428571428571429,
+   "loss": 381,
+   "blunder": 0.5,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 174,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 675,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 1.0,
+   "top3": 1.0,
+   "loss": 0,
+   "blunder": 0.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.1333333333333333,
+   "loss": 644,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 465.5,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0,
+   "loss": 413.6666666666667,
+   "blunder": 0.6666666666666666,
+   "n_options": 16
+  },
+  {
+   "top1": 0.3333333333333333,
+   "top3": 1.0,
+   "loss": 281.6666666666667,
+   "blunder": 0.3333333333333333,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 552,
+   "blunder": 1.0,
+   "n_options": 16
+  },
+  {
+   "top1": 0.0,
+   "top3": 0.0714285714285714,
+   "loss": 487,
+   "blunder": 1.0,
+   "n_options": 16
+  }
+ ]
+}

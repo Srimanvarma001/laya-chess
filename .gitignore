@@ -11,3 +11,8 @@ frontend/.env.local
 # Editor
 .vscode/
 .idea/
+
+# Chess training (Laya_Chess_Training_Guide.pdf)
+tools/
+chess_training/.venv-train/
+chess_training/data/games.pgn
