@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A local-only chess prototype that tests whether **Laya** (an external Python decision model, installed via `pip install "laya[serve]"`, not vendored here) can pick useful chess moves fast enough. The human plays white; Laya plays black. Every Laya pick is shown next to a zero-AI one-ply material evaluation in a calibration panel. `docs/PROJECT.md` is the full spec; code comments cite it by section number (e.g. "section 12"). `GETTING_STARTED.md` has the phased setup. No deployment, auth, or GPU hosting is in scope yet (PROJECT.md §27).
+A local-only chess prototype that tests whether **Laya** (an external Python decision model, installed via `pip install "laya[serve]"`, not vendored here) can pick useful chess moves fast enough. The human plays white; Laya plays black. Every Laya pick is shown next to a zero-AI one-ply material evaluation in a calibration panel. `docs/PROJECT.md` is the full spec; code comments cite it by section number (e.g. "section 12"). `README.md` has the setup; `ARCHITECTURE.md` has the detailed design. No deployment, auth, or GPU hosting is in scope yet (PROJECT.md §27).
 
 ## Commands
 

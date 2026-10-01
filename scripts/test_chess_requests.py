@@ -1,5 +1,5 @@
 """
-Task 5/6 in GETTING_STARTED.md.
+Smoke test for the Laya server (see README.md, "Other commands").
 
 First verifies /health, then sends ONE simple non-chess typed decision to
 confirm the server, JSON handling, and response shape work before any chess
@@ -49,7 +49,7 @@ def main() -> int:
         print("   OK:", health)
     except urllib.error.URLError as e:
         print(f"   FAILED to reach Laya: {e}")
-        print("   Is `laya-serve` running? See GETTING_STARTED.md Task 4.")
+        print("   Is `laya-serve` running? See the 'Run it' section of README.md.")
         return 1
 
     print("2) Sending one simple non-chess typed decision ...")

@@ -1,7 +1,7 @@
 # Local Laya install notes
 
 Laya itself is not vendored into this repo — it's installed into its own
-Python virtual environment per `GETTING_STARTED.md`, section "Phase 0".
+Python virtual environment per the root `README.md`, section "Run it".
 
 This folder is just for notes as you go: which checkpoint you're using, which
 `LAYA_*` environment variables you settled on, and anything you had to change
@@ -42,7 +42,8 @@ Reference:
 }
 ```
 
-Inference time is **not** in the body — read the `X-Inference-Time-Ms` /
-`Server-Timing` response headers (`frontend/src/api/layaClient.ts` already
-does this). Limits enforced before inference: max 100 choice options per
+Inference time is **not** in the body. `frontend/src/api/layaClient.ts` also
+checks the `X-Inference-Time-Ms` / `Server-Timing` response headers, but this
+server sends neither (checked 2026-10-01: only `date`, `server`,
+`content-length`, `content-type`), so model time shows as "n/a". Limits enforced before inference: max 100 choice options per
 question, 512 total options, 64 questions, 50000 state chars.

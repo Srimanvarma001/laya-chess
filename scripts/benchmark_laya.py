@@ -9,7 +9,7 @@ Runs, in order:
 
 Skips Test 3 (CPU vs CUDA) and Test 5 (reference-engine comparison) — those
 need two server runs / a separate engine and are meant to be done by hand
-first; see GETTING_STARTED.md.
+first; see docs/PROJECT.md section 16.
 
 Usage:
     pip install -r scripts/requirements.txt
