@@ -1,5 +1,12 @@
 import { Chess, type Move } from "chess.js";
-import type { CandidateMove, GameSnapshot, MaterialBalance, MaterialEval } from "../types";
+import type {
+  CandidateMove,
+  GameSnapshot,
+  MaterialBalance,
+  MaterialEval,
+  MaterialVerdict,
+  SettledMaterial,
+} from "../types";
 
 // Section 10/23 of PROJECT.md: all deterministic chess logic (legality, FEN,
 // material, game state) lives here and never touches Laya. This is the single
@@ -123,8 +130,111 @@ export function evaluateCandidatesByMaterial(
     return { candidateId: c.id, materialDelta: after - before };
   });
 
-  const sorted = [...evals].sort((a, b) => b.materialDelta - a.materialDelta);
-  const rankById = new Map(sorted.map((e, i) => [e.candidateId, i + 1]));
+  // Tied moves share a rank (1 + how many moves are strictly better). Most
+  // quiet moves tie at delta 0, and the heuristic has no preference among
+  // them, so giving them distinct ranks by move order would invent one.
+  return evals.map((e) => ({
+    ...e,
+    rank: 1 + evals.filter((o) => o.materialDelta > e.materialDelta).length,
+  }));
+}
 
-  return evals.map((e) => ({ ...e, rank: rankById.get(e.candidateId)! }));
+/**
+ * What the one-ply material check can say about a pick:
+ *   "agree"     -- the pick is tied for the best material delta
+ *   "disagree"  -- some other move wins more material in one ply
+ *   "no_signal" -- every candidate ties (or the pick is not a candidate), so
+ *                  the check cannot tell moves apart and must not be scored
+ */
+export function materialVerdict(
+  evals: MaterialEval[],
+  pickId: string | null
+): MaterialVerdict {
+  const pick = evals.find((e) => e.candidateId === pickId);
+  if (!pick) return "no_signal";
+  const deltas = evals.map((e) => e.materialDelta);
+  const best = Math.max(...deltas);
+  if (Math.min(...deltas) === best) return "no_signal";
+  return pick.materialDelta === best ? "agree" : "disagree";
+}
+
+/** Depth cap (plies of captures) and node budget for evaluateSettledMaterial. */
+const SETTLE_MAX_PLIES = 20;
+const SETTLE_MAX_NODES = 500;
+/** Score for a forced mate found inside the capture search (side to move is mated). */
+export const SETTLE_MATE = 100;
+
+/**
+ * Material balance once the captures on the board have played out, with zero
+ * AI: a capture-only (quiescence) search over the same piece values as
+ * computeMaterial. Static material only changes after a piece is taken, so a
+ * queen left hanging reads "+0"; this reads "-9" as soon as it can be won.
+ *
+ * The side to move may also decline every capture (stand pat), so a piece
+ * that is attacked but can still be moved away is not counted as lost. In
+ * check there is no standing pat: every evasion is searched.
+ *
+ * `diff` is white minus black. `complete` is false when the depth cap or node
+ * budget cut the search short, so the number is a bound, not the settled value.
+ */
+export function evaluateSettledMaterial(fen: string): SettledMaterial {
+  const chess = new Chess(fen);
+  const start = computeMaterial(fen);
+  const fromMover = chess.turn() === "w" ? start.diff : -start.diff;
+  let nodes = 0;
+  let complete = true;
+
+  // Moves are read as SAN strings, not verbose Move objects: chess.js builds
+  // two FENs per verbose move, which measured ~14x slower per node and made
+  // this too slow for the UI thread. A SAN has all that is needed here.
+  const describe = (san: string) => {
+    const target = san.match(/([a-h][1-8])(?:=[NBRQ])?[+#]?$/)?.[1];
+    const promo = san.match(/=([NBRQ])/)?.[1].toLowerCase();
+    let gain = promo ? PIECE_VALUES[promo] - PIECE_VALUES.p : 0;
+    if (san.includes("x") && target) {
+      // Empty target square on a capture = en passant, which takes a pawn.
+      gain += PIECE_VALUES[chess.get(target as any)?.type ?? "p"];
+    }
+    const mover = /^[NBRQK]/.test(san) ? PIECE_VALUES[san[0].toLowerCase()] : PIECE_VALUES.p;
+    return { san, gain, noisy: san.includes("x") || Boolean(promo), order: gain * 10 - mover };
+  };
+
+  // Negamax: `balance` and the return value are from the side to move's view.
+  function search(balance: number, alpha: number, beta: number, pliesLeft: number): number {
+    const inCheck = chess.inCheck();
+    let best = -Infinity;
+    if (!inCheck) {
+      // Stand pat before generating moves: move generation is the expensive
+      // part in chess.js, and most nodes cut off right here.
+      best = balance;
+      if (best >= beta) return best;
+      alpha = Math.max(alpha, best);
+    }
+    if (pliesLeft === 0 || nodes >= SETTLE_MAX_NODES) {
+      complete = false;
+      return balance;
+    }
+    nodes += 1;
+    const moves = chess.moves().map(describe);
+    if (moves.length === 0) return inCheck ? -SETTLE_MATE : balance;
+    const noisy = inCheck ? moves : moves.filter((m) => m.noisy);
+    // Biggest win for the cheapest attacker first, so cutoffs come early.
+    noisy.sort((a, b) => b.order - a.order);
+    for (const m of noisy) {
+      chess.move(m.san);
+      const score = -search(-(balance + m.gain), -beta, -alpha, pliesLeft - 1);
+      chess.undo();
+      if (score > best) best = score;
+      if (best >= beta) break;
+      alpha = Math.max(alpha, best);
+      if (nodes >= SETTLE_MAX_NODES) {
+        complete = false;
+        break;
+      }
+    }
+    return best;
+  }
+
+  const value = search(fromMover, -Infinity, Infinity, SETTLE_MAX_PLIES);
+  return { diff: chess.turn() === "w" ? value : -value, complete };
 }

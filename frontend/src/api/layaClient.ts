@@ -10,7 +10,9 @@ import type {
 // a tunnel URL and later a hosted API (section 24 / 31-33), only this file
 // and the .env value should need to change.
 
-const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+// Default is the Vite dev proxy path, not :8000 directly: laya-serve sends no
+// CORS headers, so a direct browser call fails preflight (see vite.config.ts).
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 // Trailing slashes would otherwise produce "//health" / "//v1/systemone".
 const BASE_URL = String(RAW_BASE_URL).replace(/\/+$/, "");
 
@@ -108,9 +110,10 @@ function parseModelLatencyMsFromBody(raw: any): number | null {
 }
 
 function parseModelLatencyMsFromHeaders(res: Response): number | null {
-  // The real server reports inference time in headers, not the body:
+  // Header shapes a server could report inference time in:
   //   X-Inference-Time-Ms: 123.45
   //   Server-Timing: inference;dur=123.45
+  // laya 0.3.20 sends neither (see decideMove below), so this returns null there.
   const direct = res.headers.get("X-Inference-Time-Ms");
   if (direct !== null) {
     const n = Number(direct);

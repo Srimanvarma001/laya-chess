@@ -1,10 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Board, MOVE_KNIGHT_MS } from "./components/Board";
 import { CalibrationPanel } from "./components/CalibrationPanel";
 import { SessionTally } from "./components/SessionTally";
 import { EvalBar } from "./components/EvalBar";
 import { MoveTrails, type TrailMove } from "./components/MoveTrails";
-import { applyMove, evaluateCandidatesByMaterial, getPieceAt, startingSnapshot } from "./chess/engine";
+import {
+  applyMove,
+  evaluateCandidatesByMaterial,
+  evaluateSettledMaterial,
+  getPieceAt,
+  materialVerdict,
+  startingSnapshot,
+} from "./chess/engine";
 import {
   LayaInvalidResponseError,
   LayaTimeoutError,
@@ -81,7 +88,9 @@ export default function App() {
   const [decisionCandidates, setDecisionCandidates] = useState<CandidateMove[] | null>(null);
   const [decisionMaterialEvals, setDecisionMaterialEvals] = useState<MaterialEval[] | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [tally, setTally] = useState({ agree: 0, disagree: 0 });
+  // noSignal: every candidate tied on one-ply material, so the check could
+  // not tell moves apart. Kept out of agree/disagree instead of scored.
+  const [tally, setTally] = useState({ agree: 0, disagree: 0, noSignal: 0 });
   // Last played move (white or black): Board slides the glyph from->to.
   const [lastMove, setLastMove] = useState<{
     from: string;
@@ -166,6 +175,9 @@ export default function App() {
   }
 
   const materialEvals = evaluateCandidatesByMaterial(snapshot.fen, snapshot.legalMoves);
+  // Eval bar value: material after the available captures play out. Memoised
+  // on the FEN because it is a small search (a few ms, occasionally ~100).
+  const settledMaterial = useMemo(() => evaluateSettledMaterial(snapshot.fen), [snapshot.fen]);
 
   const isThinking = connectionState === "thinking";
   // The exact candidate set being weighed right now: the same deterministic
@@ -306,9 +318,14 @@ export default function App() {
       setLatencies((prev) => [...prev, sample]);
 
       const positionMaterialEvals = evaluateCandidatesByMaterial(position.fen, position.legalMoves);
-      const topByMaterial = positionMaterialEvals.find((m) => m.rank === 1);
-      const agrees = result.selectedCandidateId === topByMaterial?.candidateId;
-      setTally((t) => (agrees ? { ...t, agree: t.agree + 1 } : { ...t, disagree: t.disagree + 1 }));
+      const verdict = materialVerdict(positionMaterialEvals, result.selectedCandidateId);
+      setTally((t) =>
+        verdict === "agree"
+          ? { ...t, agree: t.agree + 1 }
+          : verdict === "disagree"
+            ? { ...t, disagree: t.disagree + 1 }
+            : { ...t, noSignal: t.noSignal + 1 }
+      );
 
       const pickId = result.selectedCandidateId;
       const picked = position.legalMoves.find((m) => m.id === pickId);
@@ -407,7 +424,7 @@ export default function App() {
     setDecisionMaterialEvals(null);
     setErrorMessage(null);
     setConnectionState((s) => (s === "thinking" ? "connected" : s));
-    setTally({ agree: 0, disagree: 0 });
+    setTally({ agree: 0, disagree: 0, noSignal: 0 });
     latencyCountRef.current = 0;
     setLatencies([]);
   }
@@ -461,7 +478,7 @@ export default function App() {
 
       <main>
         <div className="board-section">
-          <EvalBar diff={snapshot.material.diff} />
+          <EvalBar settled={settledMaterial} staticDiff={snapshot.material.diff} />
           <div className="board-wrap">
             <Board
               fen={snapshot.fen}
@@ -514,7 +531,7 @@ export default function App() {
             latencies={latencies}
             currentLegal={snapshot.legalMoves.length}
           />
-          <SessionTally agree={tally.agree} disagree={tally.disagree} />
+          <SessionTally agree={tally.agree} disagree={tally.disagree} noSignal={tally.noSignal} />
         </section>
       </main>
     </div>

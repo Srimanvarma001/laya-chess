@@ -51,8 +51,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Then edit `frontend/.env.local` and set `VITE_API_BASE_URL=/api`. The example file defaults to
-`http://localhost:8000`, which the browser blocks because `laya-serve` sends no CORS headers.
+The app calls Laya through the Vite proxy at `/api`, because `laya-serve` sends no CORS headers.
 
 **3. Play.** Click a white piece, click a highlighted square. Laya replies as black.
 

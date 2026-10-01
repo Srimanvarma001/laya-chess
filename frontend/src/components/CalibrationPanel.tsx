@@ -1,3 +1,4 @@
+import { materialVerdict } from "../chess/engine";
 import type { CandidateMove, LayaDecisionResponse, LatencySample, MaterialEval } from "../types";
 
 interface CalibrationPanelProps {
@@ -116,7 +117,9 @@ export function CalibrationPanel({
 
   const top = rows[0];
   const topMaterialRank = top?.material?.rank;
-  const materialAgrees = topMaterialRank === 1;
+  // Same verdict the session tally uses, so the headline and the tally never
+  // disagree about one decision.
+  const verdict = materialVerdict(materialEvals, top?.candidate.id ?? null);
   const pct = (p: number) => `${(Math.max(0, Math.min(1, p)) * 100).toFixed(0)}%`;
 
   const stats = summarizeLatencies(latencies);
@@ -183,10 +186,12 @@ export function CalibrationPanel({
             <span className="move">{top.candidate.san}</span> won{" "}
             <span className="pct">{pct(top.score!.rawConfidence)}</span> of its
             belief across {rows.length} candidates. The plain material check{" "}
-            {materialAgrees ? (
+            {verdict === "agree" ? (
               <span className="agree">agrees</span>
-            ) : (
+            ) : verdict === "disagree" ? (
               <span className="disagree">picks something else</span>
+            ) : (
+              <span>cannot tell — every move ties</span>
             )}
             .
           </p>
@@ -265,9 +270,10 @@ export function CalibrationPanel({
           </div>
 
           <p className="panel-note">
-            "Agrees" only checks whether Laya's top pick is also the top pick by
+            "Agrees" only checks whether Laya's top pick is tied for the best
             raw one-ply material — a cheap sanity check, not a claim that
-            material-greedy play is objectively correct chess.
+            material-greedy play is objectively correct chess. When every move
+            ties, the check says nothing and the decision is not tallied.
             {decision.routingReason ? ` Routed: ${decision.routingReason}.` : ""}
             {decision.usage ? ` Tokens: ${decision.usage.input_tokens} in.` : ""}
           </p>

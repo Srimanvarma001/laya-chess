@@ -112,7 +112,9 @@ A thin wrapper over `chess.js`. It never touches the network or Laya.
 | `applyMove(fen, history, candidateId)` | Plays a move by id and returns the new snapshot. Throws `Illegal move attempted: ...` if it is not legal |
 | `getPieceAt(fen, square)` | Piece on a square, or `null` |
 | `computeMaterial(fen)` | Material totals using P=1, N=3, B=3, R=5, Q=9, K=0 |
-| `evaluateCandidatesByMaterial(fen, candidates)` | The one-ply baseline: plays each candidate on a scratch board and records the material change for the side to move, then ranks them |
+| `evaluateCandidatesByMaterial(fen, candidates)` | The one-ply baseline: plays each candidate on a scratch board and records the material change for the side to move, then ranks them. Tied moves share a rank |
+| `materialVerdict(evals, pickId)` | `agree` if the pick is tied for the best one-ply material, `disagree` if another move wins more, `no_signal` if every move ties or the pick is not a candidate |
+| `evaluateSettledMaterial(fen)` | Material balance after the available captures play out: a capture-only search with stand-pat, capped at 20 plies and 500 nodes. Returns `{ diff, complete }`. Feeds the eval bar |
 
 Two design points:
 
@@ -172,8 +174,8 @@ Components take props and render. None of them call Laya.
 | `Board.tsx` | 8×8 grid of buttons. Click a piece to select it, click a highlighted square to move. Also renders ghost pieces, the check glow, last-move tint and the sliding piece animation |
 | `CalibrationPanel.tsx` | Sent / legal move counter, top-5 probability bars, latency breakdown, session latency stats and sparkline |
 | `MoveTrails.tsx` | SVG overlay of lines on the board. Also exports the square-geometry helpers that `Board` uses |
-| `EvalBar.tsx` | Vertical material bar. Clamps the difference to ±12 |
-| `SessionTally.tsx` | Agree / disagree counts and percentage |
+| `EvalBar.tsx` | Vertical material bar showing `evaluateSettledMaterial`, so a piece that can be won moves the bar before it is taken. Clamps to ±12, shows `#` for mate and `~` when the search was cut short. Hover text gives the plain on-board count |
+| `SessionTally.tsx` | Agree / disagree counts and percentage, plus a separate count of "no signal" decisions that are excluded from the percentage |
 
 `Board` calls `getLegalMoves` from the engine to find destinations for the selected piece. The only
 way a move reaches the game state is `onMove(candidate)` with a candidate taken from that list, so an
@@ -214,7 +216,7 @@ back in App
   │ 12. drop the result if requestIdRef moved on
   │ 13. hold until the ghost view has been up for 2 s (visual only)
   │ 14. record the LatencySample (first of the session is tagged cold start)
-  │ 15. material baseline for the scored position → update agree / disagree tally
+  │ 15. material baseline for the scored position → tally agree / disagree / no signal
   │ 16. validate: the pick must be one of next.legalMoves
   │ 17. engine.applyMove(...)            → snapshot after black's move
   │ 18. set lastMove, slide line, landing ghost → black piece animates
@@ -234,7 +236,7 @@ Things worth knowing about this loop:
 - **The hold in step 13 is not counted as latency.** Timings are captured inside `decideMove` before
   the hold begins. A consequence is that black's reply appears no sooner than about 2.45 s after the
   request starts (450 ms delay + 2000 ms minimum ghost view), even when Laya answers in 400 ms.
-- **The tally is updated even when the pick is illegal**, because it is computed before validation.
+- **An illegal pick is tallied as "no signal"**, because the material check has no entry for it.
 - **Health is checked once**, on mount. After that, connection state comes from request outcomes.
 
 ## 5. Laya API contract
@@ -553,7 +555,7 @@ already matches `layaClient.ts`. The candidate filter does not (section 14).
 
 | Variable | Value | Notes |
 |---|---|---|
-| `VITE_API_BASE_URL` | `/api` | Goes through the Vite proxy. `.env.example` ships `http://localhost:8000`, which fails CORS in a browser |
+| `VITE_API_BASE_URL` | `/api` | Goes through the Vite proxy. Also the fallback in `layaClient.ts` when the variable is unset. Pointing it straight at `http://localhost:8000` fails CORS in a browser |
 | `VITE_LAYA_API_KEY` | empty | Set only if the server was started with `LAYA_API_KEY` |
 
 Any `VITE_*` value is compiled into the JavaScript bundle in plain text. That is acceptable only
@@ -585,13 +587,17 @@ because everything runs on localhost. See
 - **The app and the training pipeline filter candidates differently.** The app sends every legal
   move (up to 64). The pipeline's `k16` filter keeps 16, and its recall is 66% against a 90% target.
   One of them has to change before training data and the app agree.
-- **"Agrees with material" is strict.** Most moves tie on one-ply material. `rank` breaks ties by
-  move order, so Laya only "agrees" when it picks the single move that happens to be ranked first.
+- **The material check is silent in most quiet positions.** When every move ties on one-ply
+  material, the decision is counted as "no signal" and left out of the agreement percentage, so the
+  percentage is built only from positions where a capture or promotion was available.
+- **The eval bar is material only.** It sees pieces that can be won by captures, but not threats,
+  forks, pins or anything positional. Its capture search is capped at 20 plies and 500 nodes; a
+  capped result is shown with a `~` prefix.
 - **White always promotes to a queen.** `Board` auto-queens. Laya can still under-promote, because
   all four promotion candidates are sent.
 - **Black's reply is visually delayed** to at least about 2.45 s (section 4).
-- **`.env.example` has a base URL that does not work in a browser** (section 13).
-- **Server inference time is unavailable** on laya 0.3.20, so MODEL and OVERHEAD show "n/a".
+- **Server inference time is unavailable** on laya 0.3.20, so MODEL and OVERHEAD show "n/a". The
+  installed `laya/serve.py` has no timing header or body field to turn on.
 - **Unused code paths:** `MoveTrails` has a `resolved` mode and `App.tsx` has `buildResolvedTrails`,
   but the resolved trails are only logged to the console and not drawn.
 - **No automated tests or lint.** `npm run build` (TypeScript) is the only check.

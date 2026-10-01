@@ -96,7 +96,18 @@ export type LayaConnectionState =
 export interface MaterialEval {
   candidateId: string;
   materialDelta: number; // material change for the side to move, from this one move
-  rank: number; // 1 = best by this heuristic
+  rank: number; // 1 = best by this heuristic; tied moves share a rank
+}
+
+/** What the one-ply material check says about a pick. "no_signal" = every move ties. */
+export type MaterialVerdict = "agree" | "disagree" | "no_signal";
+
+/** Material balance after the available captures play out (engine.ts evaluateSettledMaterial). */
+export interface SettledMaterial {
+  /** white - black, positive favors white. ±SETTLE_MATE when the capture search ends in mate. */
+  diff: number;
+  /** False when the search hit its depth cap or node budget before settling. */
+  complete: boolean;
 }
 
 /**
